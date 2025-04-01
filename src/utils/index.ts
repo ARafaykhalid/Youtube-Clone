@@ -1,6 +1,7 @@
 // Re-export all utilities
 export * from './formatters';
 export * from './construction';
+export * from './images';
 
 /**
  * Utility for conditionally joining class names

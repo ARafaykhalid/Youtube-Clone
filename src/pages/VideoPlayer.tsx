@@ -12,6 +12,7 @@ import { getShortsById, type ShortsVideo } from '@/data/shortsVideos';
 import { ThumbsUp, ThumbsDown, Share2, Save, MoreHorizontal, Users, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import defaultAvatar from "@/assets/images/default-avatar.svg";
 
 // Combine the properties of Video and ShortsVideo
 type MergedVideo = {
@@ -282,7 +283,7 @@ const VideoPlayer = () => {
                       alt={video.channelName}
                       className="w-10 h-10 rounded-full mr-3"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40x40?text=YT';
+                        (e.target as HTMLImageElement).src = defaultAvatar;
                       }}
                     />
                     <div className="mr-4">

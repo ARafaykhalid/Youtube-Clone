@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Video } from '@/data/videos';
+import { handleImageError } from '@/utils/images';
 
 interface RelatedVideosProps {
   videos: Video[];
@@ -18,9 +19,7 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
               src={video.thumbnailUrl} 
               alt={video.title} 
               className="w-full h-full object-cover rounded-lg"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/160x90?text=Video+Unavailable';
-              }}
+              onError={(e) => handleImageError(e, 'thumbnail')}
             />
             <div className="absolute bottom-1 right-1 bg-black bg-opacity-80 text-white text-xs px-1 rounded">
               {video.duration}

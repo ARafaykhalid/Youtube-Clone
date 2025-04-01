@@ -5,6 +5,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Video } from "@/data/videos";
 import { Link } from "react-router-dom";
 import { formatViewCount, formatTimeAgo } from "@/lib/formatters";
+import { handleImageError, FALLBACK_THUMBNAILS, extractYouTubeVideoId } from "@/utils/images";
 
 // Extended interface for our VideoCardProps
 interface VideoCardProps {
@@ -18,13 +19,6 @@ interface VideoCardProps {
   aspectRatio?: "portrait" | "video" | "square";
   className?: string;
 }
-
-// Fallback images for when thumbnails fail to load
-const fallbackThumbnails = [
-  "https://i.ytimg.com/vi/default/mqdefault.jpg",
-  "https://via.placeholder.com/1200x720/333333/ffffff?text=Video+Not+Found",
-  "https://via.placeholder.com/1200x720/111111/ffffff?text=No+Preview+Available"
-];
 
 const VideoCard = ({
   video,
@@ -42,29 +36,10 @@ const VideoCard = ({
   // Different path for shorts vs regular videos
   const videoPath = video.isShort ? `/shorts/${videoLinkId}` : `/video/${videoLinkId}`;
 
-  // Extract video ID from YouTube URL if present
-  const getVideoIdFromUrl = (url: string) => {
-    // YouTube URLs can have various formats
-    const regexPatterns = [
-      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
-      /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?]+)/,
-      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/
-    ];
-    
-    for (const pattern of regexPatterns) {
-      const match = url.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
-    }
-    
-    return null;
-  };
-
   // Handle thumbnail load error by trying fallbacks
   const handleThumbnailError = () => {
     // Try to extract video ID and use an alternative YouTube thumbnail format
-    const videoId = getVideoIdFromUrl(video.thumbnailUrl) || video.videoId;
+    const videoId = extractYouTubeVideoId(video.thumbnailUrl) || video.videoId;
     
     if (videoId) {
       // Try different YouTube thumbnail formats
@@ -87,26 +62,9 @@ const VideoCard = ({
       }
     }
     
-    // If YouTube formats failed or weren't available, use generic fallbacks
-    const genericFallbackIndex = fallbackIndex - (videoId ? 4 : 0);
-    if (genericFallbackIndex < fallbackThumbnails.length) {
-      setThumbnailSrc(fallbackThumbnails[genericFallbackIndex]);
-      setFallbackIndex(fallbackIndex + 1);
-    } else {
-      // Final fallback to a colored box with the video title
-      const titleInitials = video.title
-        .split(' ')
-        .slice(0, 2)
-        .map(word => word.charAt(0))
-        .join('');
-      
-      const videoCategory = video.category || 'video';
-      const placeholderUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(titleInitials)}&background=random&color=fff&size=150&bold=true&format=svg&text=${encodeURIComponent(videoCategory)}`;
-      
-      setThumbnailSrc(placeholderUrl);
-      // Prevent further error handling
-      setFallbackIndex(99);
-    }
+    // If YouTube formats failed or weren't available, use our local fallback
+    setThumbnailSrc(FALLBACK_THUMBNAILS[0]);
+    setFallbackIndex(99); // Prevent further error handling attempts
   };
 
   // Determine aspect ratio for shorts
@@ -182,11 +140,7 @@ const VideoCard = ({
                   src={video.channelImageUrl}
                   alt={video.channelName}
                   className="rounded-full object-cover h-full w-full"
-                  onError={(e) => {
-                    const channelInitial = video.channelName.charAt(0).toUpperCase();
-                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${channelInitial}&background=random&color=fff&size=36`;
-                    (e.target as HTMLImageElement).onerror = null;
-                  }}
+                  onError={(e) => handleImageError(e, 'avatar')}
                 />
               </div>
             </Link>

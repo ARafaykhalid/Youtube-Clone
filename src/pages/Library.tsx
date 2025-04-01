@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { longVideos } from '@/data/longVideos';
 import { saveLikedVideo } from '@/data/videos';
 import { toast } from 'sonner';
+import { handleImageError } from '@/utils/images';
 
 interface LibraryProps {
   tab?: string;
@@ -213,7 +214,7 @@ const Library: React.FC<LibraryProps> = ({ tab }) => {
               {loading.liked ? (
                 <LoadingState />
               ) : likedVideos.length > 0 ? (
-                <VideoGrid videos={likedVideos} />
+              <VideoGrid videos={likedVideos} />
               ) : (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground mb-4">Videos you like will appear here</p>
@@ -250,9 +251,7 @@ const Library: React.FC<LibraryProps> = ({ tab }) => {
                             src={video.thumbnailUrl} 
                             alt={video.title} 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/480x270?text=Video+Thumbnail';
-                            }}
+                            onError={(e) => handleImageError(e, 'thumbnail')}
                           />
                           <div className="absolute bottom-1 right-1 bg-black bg-opacity-80 text-white text-xs px-1 rounded">
                             {video.duration}
@@ -280,12 +279,7 @@ const Library: React.FC<LibraryProps> = ({ tab }) => {
                               src={video.channelImageUrl} 
                               alt={video.channelName} 
                               className="w-9 h-9 rounded-full object-cover"
-                              onError={(e) => {
-                                const initial = video.channelName.charAt(0).toUpperCase();
-                                const colors = ["4285F4", "DB4437", "F4B400", "0F9D58"];
-                                const colorIndex = video.channelName.length % colors.length;
-                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${initial}&background=${colors[colorIndex]}&color=fff&size=36`;
-                              }}
+                              onError={(e) => handleImageError(e, 'avatar')}
                             />
                           </Link>
                         </div>
@@ -294,7 +288,10 @@ const Library: React.FC<LibraryProps> = ({ tab }) => {
                             <h3 className="text-sm font-medium line-clamp-2 text-left">{video.title}</h3>
                           </Link>
                           <div className="flex flex-col text-xs text-gray-600 dark:text-gray-400 text-left">
-                            <Link to={`/channel/${encodeURIComponent(video.channelName)}`} className="hover:text-black dark:hover:text-white">
+                            <Link 
+                              to={`/channel/${encodeURIComponent(video.channelName)}`} 
+                              className="hover:text-black dark:hover:text-white"
+                            >
                               {video.channelName}
                             </Link>
                             <span>{video.views} • {video.timestamp}</span>
@@ -342,9 +339,7 @@ const Library: React.FC<LibraryProps> = ({ tab }) => {
                               src={video.thumbnailUrl} 
                               alt={video.title} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/480x270?text=Video+Thumbnail';
-                              }}
+                              onError={(e) => handleImageError(e, 'thumbnail')}
                             />
                             <div className="absolute bottom-1 right-1 bg-black bg-opacity-80 text-white text-xs px-1 rounded">
                               {video.duration}
@@ -352,23 +347,30 @@ const Library: React.FC<LibraryProps> = ({ tab }) => {
                           </div>
                         </Link>
                         <div className="flex gap-3">
+                          <div className="flex-shrink-0 pt-1">
+                            <Link to={`/channel/${encodeURIComponent(video.channelName)}`}>
+                              <img 
+                                src={video.channelImageUrl} 
+                                alt={video.channelName} 
+                                className="w-9 h-9 rounded-full object-cover"
+                                onError={(e) => handleImageError(e, 'avatar')}
+                              />
+                            </Link>
+                          </div>
                           <div className="flex-1">
                             <Link to={`/watch/${video.id}`}>
                               <h3 className="text-sm font-medium line-clamp-2 text-left">{video.title}</h3>
                             </Link>
-                            <div className="flex flex-col text-left">
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                {video.views} • {video.timestamp}
-                              </p>
-                              <div className="flex items-center mt-1 text-xs text-gray-600 dark:text-gray-400">
-                                <span className="w-2 h-2 rounded-full bg-green-500 mr-1"></span>
-                                Public
-                              </div>
+                            <div className="flex flex-col text-xs text-gray-600 dark:text-gray-400 text-left">
+                              <Link 
+                                to={`/channel/${encodeURIComponent(video.channelName)}`} 
+                                className="hover:text-black dark:hover:text-white"
+                              >
+                                {video.channelName}
+                              </Link>
+                              <span>{video.views} • {video.timestamp}</span>
                             </div>
                           </div>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
                         </div>
                       </div>
                     ))}

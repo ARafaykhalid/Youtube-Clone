@@ -12,6 +12,8 @@ import { BellIcon, CheckIcon, ExternalLinkIcon, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import { getUserProfile } from "@/data/userData";
+import { FALLBACK_THUMBNAILS, handleImageError } from "@/utils/images";
+import defaultBanner from '@/assets/images/default-banner.svg';
 
 interface ChannelInfo {
   name: string;
@@ -48,12 +50,6 @@ const getChannelYoutubeId = (name: string): string | undefined => {
 const getYouTubeChannelImage = (channelId: string): string => {
   return `https://yt3.googleusercontent.com/ytc/${channelId}=s176-c-k-c0x00ffffff-no-rj`;
 };
-
-const fallbackThumbnails = [
-  "https://i.ytimg.com/vi/default/mqdefault.jpg",
-  "https://i.ytimg.com/vi/default/maxresdefault.jpg",
-  "https://via.placeholder.com/1200x720/333333/ffffff?text=Video+Thumbnail"
-];
 
 const Channel = () => {
   const { channelName } = useParams<{ channelName: string }>();
@@ -94,11 +90,8 @@ const Channel = () => {
       return knownChannels[name];
     }
 
-    // Otherwise generate a random gradient banner
-    const colors = ["4285F4", "EA4335", "FBBC05", "34A853", "FF9800", "9C27B0"];
-    const idx = name.length % colors.length;
-    const idx2 = (name.length + 2) % colors.length;
-    return `https://via.placeholder.com/1200x200/${colors[idx]}/${colors[idx2]}?text=`;
+    // Use our default banner from assets
+    return defaultBanner;
   };
 
   // Save channel info to localStorage
@@ -422,13 +415,7 @@ const Channel = () => {
                   src={channelImg}
                   alt={channelName}
                   className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-zinc-900 shadow-md"
-                  onError={(e) => {
-                    // Use a placeholder with the channel name's first letter
-                    const channelInitial = (decodeURIComponent(channelName || "C")).charAt(0).toUpperCase();
-                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${channelInitial}&background=${bannerColor.replace('#', '')}&color=fff&size=80`;
-                    // Prevent infinite error loops
-                    (e.target as HTMLImageElement).onerror = null;
-                  }}
+                  onError={(e) => handleImageError(e, 'avatar')}
                 />
               </div>
               

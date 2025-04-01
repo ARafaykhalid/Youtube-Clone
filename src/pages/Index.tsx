@@ -149,7 +149,7 @@ const Index: React.FC<IndexProps> = ({ category }) => {
       setLoading(false);
     }
   }, [category, params, location.pathname]);
-
+  
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -197,10 +197,10 @@ const Index: React.FC<IndexProps> = ({ category }) => {
                   onClick={() => handleCategoryClick(chip)}
                 >
                   {chip}
-                </Button>
+          </Button>
               ))}
             </div>
-          </div>
+        </div>
         )}
         
         <div className="px-4 py-6">
