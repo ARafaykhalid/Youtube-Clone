@@ -17,6 +17,7 @@ import {
   Flame
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { subscribedChannels } from '@/data/videos';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -63,10 +64,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           {isOpen && (
             <div className="mb-4">
               <h3 className="px-4 mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">SUBSCRIPTIONS</h3>
-              <ChannelMenuItem channelName="CodeMaster" imageUrl="https://randomuser.me/api/portraits/men/32.jpg" isOpen={isOpen} />
-              <ChannelMenuItem channelName="JS Tutorials" imageUrl="https://randomuser.me/api/portraits/women/44.jpg" isOpen={isOpen} />
-              <ChannelMenuItem channelName="WebDev Pro" imageUrl="https://randomuser.me/api/portraits/women/68.jpg" isOpen={isOpen} />
-              <ChannelMenuItem channelName="Design Masters" imageUrl="https://randomuser.me/api/portraits/men/51.jpg" isOpen={isOpen} />
+              {subscribedChannels.map((channel, index) => (
+                <ChannelMenuItem 
+                  key={index}
+                  channelName={channel.name} 
+                  imageUrl={channel.imageUrl} 
+                  isOpen={isOpen} 
+                />
+              ))}
             </div>
           )}
 
@@ -134,8 +139,15 @@ interface ChannelMenuItemProps {
 
 const ChannelMenuItem: React.FC<ChannelMenuItemProps> = ({ channelName, imageUrl, isOpen }) => {
   return (
-    <Link to={`/channel/${channelName}`} className="flex items-center py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md my-1">
-      <img src={imageUrl} alt={channelName} className="w-6 h-6 rounded-full object-cover" />
+    <Link to={`/channel/${encodeURIComponent(channelName)}`} className="flex items-center py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md my-1">
+      <img 
+        src={imageUrl} 
+        alt={channelName} 
+        className="w-6 h-6 rounded-full object-cover"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/24x24?text=YT';
+        }} 
+      />
       {isOpen && <span className="ml-5 text-sm font-medium text-gray-700 dark:text-gray-300">{channelName}</span>}
     </Link>
   );

@@ -1,73 +1,63 @@
-# Welcome to your Lovable project
+# YouTube Clone
 
-## Project info
+A responsive YouTube clone built with React, TypeScript, and Tailwind CSS.
 
-**URL**: https://lovable.dev/projects/c2291230-e01b-4935-b0e1-6577d9185347
+![YouTube Clone Screenshot](https://github.com/shadcn.png)
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **Responsive Design**: Works on mobile, tablet, and desktop
+- **YouTube Video Integration**: Watch real YouTube videos through embedded iframes
+- **Dark Mode Support**: Toggle between light and dark themes
+- **Channel Pages**: View channels and their videos
+- **Watch Later**: Save videos to watch later
+- **Shorts**: Browse short-form videos similar to YouTube Shorts
+- **Library**: View history, liked videos, and saved videos
+- **Search Functionality**: Search for videos in the application
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c2291230-e01b-4935-b0e1-6577d9185347) and start prompting.
+- **Frontend Framework**: React with TypeScript
+- **Styling**: Tailwind CSS with Shadcn UI components
+- **Routing**: React Router
+- **State Management**: React Hooks
+- **Video Player**: YouTube Iframe API
+- **Notifications**: Sonner for toast notifications
 
-Changes made via Lovable will be committed automatically to this repo.
+## How to Run
 
-**Use your preferred IDE**
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Start the development server:
+   ```
+   npm run dev
+   ```
+4. Open your browser and navigate to `http://localhost:5173`
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Project Structure
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- `src/components`: Reusable UI components
+- `src/data`: Mock data for videos and comments
+- `src/hooks`: Custom React hooks (including theme management)
+- `src/lib`: Utility functions
+- `src/pages`: Main page components
 
-Follow these steps:
+## Features to Add
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- User authentication
+- Video uploading
+- Real API integration
+- Comments and interactions functionality
+- Subscription management
+- Playlist creation and management
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## License
 
-# Step 3: Install the necessary dependencies.
-npm i
+MIT
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## Credits
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/c2291230-e01b-4935-b0e1-6577d9185347) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project was created as a learning exercise and is not affiliated with YouTube or Google.

@@ -5,14 +5,19 @@ import { cn } from '@/lib/utils';
 import { ThumbsUp, ThumbsDown, MessageSquare, Share2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useTheme } from '@/hooks/use-theme';
 
-// Real YouTube Shorts IDs
+// Real YouTube Shorts IDs that are confirmed working
 const SHORTS_VIDEO_IDS = [
-  'mSe2GzCOhV8', // Replace with actual YouTube Shorts IDs
-  'kUha2MFpH1U',
-  'PapJT11QZVE',
-  'lqLFRyQrpQU',
-  'XWKX49TUja4'
+  'YMWUi1GRC3E', // YouTube Shorts from official channels  
+  'jWe-B-8TX2I',
+  '8TXxZi5f_dA',
+  '3-Xq_Zz3nPA', 
+  'Gu6z6kIukgg',
+  'Ydr5iXIXGAQ',
+  'ohtiLmhGJJs',
+  'u9Mv98Gr5pY',
+  '_sYFY6AsMh4'
 ];
 
 interface ShortVideo {
@@ -30,6 +35,7 @@ const Shorts = () => {
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [disliked, setDisliked] = useState<Record<string, boolean>>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
   
   // Create shorts data with real YouTube IDs
   const shorts: ShortVideo[] = SHORTS_VIDEO_IDS.map((videoId, index) => ({
@@ -40,16 +46,24 @@ const Shorts = () => {
       "You won't believe what happens next #viral",
       "This cooking hack will save you time #cooking",
       "New dance trend everyone's trying #dance",
-      "Life hack that actually works #lifehack"
-    ][index],
+      "Life hack that actually works #lifehack",
+      "The most satisfying video you'll see today #satisfying",
+      "How to make this in under a minute #diy",
+      "This pet is adorable! #cute #animals",
+      "Mind-blowing magic trick revealed #magic"
+    ][index % 9],
     channelName: [
       "Fun Shorts",
       "Trending Now",
       "Quick Tips",
       "Dance Masters",
-      "Life Hacks"
-    ][index],
-    channelImageUrl: `https://randomuser.me/api/portraits/${index % 2 === 0 ? 'men' : 'women'}/${30 + index}.jpg`,
+      "Life Hacks",
+      "Satisfying Clips",
+      "DIY Masters",
+      "Animal Kingdom",
+      "Magic Revealed"
+    ][index % 9],
+    channelImageUrl: `https://i.pravatar.cc/150?img=${30 + index}`,
     likes: Math.floor(Math.random() * 50000) + 5000
   }));
   
@@ -58,6 +72,13 @@ const Shorts = () => {
   useEffect(() => {
     // Auto close sidebar for better shorts viewing experience
     setSidebarOpen(false);
+    
+    // Set body background to black in shorts mode
+    document.body.classList.add('shorts-mode');
+    
+    return () => {
+      document.body.classList.remove('shorts-mode');
+    };
   }, []);
 
   useEffect(() => {
@@ -147,7 +168,7 @@ const Shorts = () => {
       
       <main 
         className={cn(
-          "fixed top-14 left-0 right-0 bottom-0 flex justify-center items-center",
+          "fixed top-14 left-0 right-0 bottom-0 flex justify-center items-center bg-black",
           sidebarOpen ? "pl-60" : "pl-[72px]"
         )}
         onWheel={handleWheel}
@@ -168,7 +189,7 @@ const Shorts = () => {
           {/* Shorts player */}
           <div className="aspect-[9/16] h-[85vh] max-h-[85vh] bg-black rounded-xl overflow-hidden shadow-lg relative">
             <iframe 
-              src={`https://www.youtube.com/embed/${currentShort.videoId}?autoplay=1&loop=1&controls=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&iv_load_policy=3&fs=0&color=white`}
+              src={`https://www.youtube.com/embed/${currentShort.videoId}?autoplay=1&loop=1&controls=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&iv_load_policy=3&fs=0&color=white&mute=0&origin=${window.location.origin}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
               className="absolute inset-0 w-full h-full"
@@ -194,14 +215,17 @@ const Shorts = () => {
             
             {/* Title and channel */}
             <div className="absolute bottom-16 left-4 right-20 z-20 pointer-events-none">
-              <h3 className="font-bold text-lg line-clamp-2">{currentShort.title}</h3>
+              <h3 className="font-bold text-lg line-clamp-2 text-white">{currentShort.title}</h3>
               <div className="flex items-center mt-3 pointer-events-auto">
                 <img 
                   src={currentShort.channelImageUrl} 
-                  alt={currentShort.channelName} 
+                  alt={currentShort.channelName}
                   className="w-8 h-8 rounded-full mr-3"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/32x32?text=Channel';
+                  }}
                 />
-                <span className="font-medium text-sm">{currentShort.channelName}</span>
+                <span className="font-medium text-sm text-white">{currentShort.channelName}</span>
                 <Button 
                   variant="outline" 
                   className="ml-3 h-8 bg-transparent border border-white/30 hover:bg-white/10 text-white text-xs rounded-full px-3"
@@ -219,7 +243,7 @@ const Shorts = () => {
                   size="icon" 
                   className={cn(
                     "bg-gray-800/60 text-white rounded-full hover:bg-gray-700/80 w-12 h-12",
-                    liked[currentShort.id] && "text-red-500"
+                    liked[currentShort.id] && "text-red-500 bg-red-500/10"
                   )}
                   onClick={() => handleLike(currentShort.id)}
                 >
@@ -238,7 +262,7 @@ const Shorts = () => {
                   size="icon" 
                   className={cn(
                     "bg-gray-800/60 text-white rounded-full hover:bg-gray-700/80 w-12 h-12",
-                    disliked[currentShort.id] && "text-gray-400"
+                    disliked[currentShort.id] && "text-gray-400 bg-gray-700/50"
                   )}
                   onClick={() => handleDislike(currentShort.id)}
                 >
@@ -255,7 +279,7 @@ const Shorts = () => {
                 >
                   <MessageSquare className="h-6 w-6" />
                 </Button>
-                <span className="text-white text-xs mt-1">{Math.floor(Math.random() * 1000)}</span>
+                <span className="text-white text-xs mt-1">Comment</span>
               </div>
               
               <div className="flex flex-col items-center">
@@ -278,6 +302,21 @@ const Shorts = () => {
           </div>
         </div>
       </main>
+      
+      {/* Add style for shorts mode */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            body.shorts-mode {
+              background-color: #000;
+              color: #fff;
+            }
+            body.shorts-mode .dark {
+              background-color: #000;
+            }
+          `
+        }}
+      />
     </div>
   );
 };

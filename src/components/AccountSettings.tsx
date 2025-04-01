@@ -1,18 +1,28 @@
-
 import React from 'react';
-import { Moon, Sun, Laptop, User, LogOut, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { User, Settings, LogOut, Moon, Sun, HelpCircle } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useTheme } from '@/hooks/use-theme';
+import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/components/ui/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
-const AccountSettings = () => {
+interface AccountSettingsProps {
+  onClose: () => void;
+}
+
+const AccountSettings: React.FC<AccountSettingsProps> = ({ onClose }) => {
   const { theme, setTheme } = useTheme();
-  const { toast } = useToast();
   
+  const handleOutsideClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   const handleThemeChange = (value: string) => {
     setTheme(value as 'light' | 'dark' | 'system');
     
@@ -20,110 +30,87 @@ const AccountSettings = () => {
       ? 'System' 
       : `${value.charAt(0).toUpperCase() + value.slice(1)}`;
     
-    toast({
-      title: `${themeLabel} mode activated`,
-      description: `You've switched to ${value === 'system' ? 'system default' : value} mode.`
-    });
-  };
-
-  const handleLogout = () => {
-    toast({
-      title: "Not implemented",
-      description: "Logout functionality is not implemented yet."
-    });
+    toast(`${themeLabel} mode activated`);
   };
 
   return (
-    <div className="p-4 bg-background text-foreground">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium">Account Settings</h3>
-        <Settings className="h-5 w-5 text-muted-foreground" />
-      </div>
-      
-      <div className="flex items-center gap-3 py-2">
-        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-          <User className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="font-medium">YouTube User</p>
-          <p className="text-sm text-muted-foreground">youtubeuser@example.com</p>
-        </div>
-      </div>
-      
-      <Separator className="my-4" />
-      
-      <div className="space-y-4">
-        <div>
-          <h4 className="text-sm font-medium mb-3">Appearance</h4>
-          <RadioGroup 
-            value={theme} 
-            onValueChange={handleThemeChange}
-            className="grid grid-cols-3 gap-2"
+    <div 
+      className="fixed inset-0 z-50 bg-transparent" 
+      onClick={handleOutsideClick}
+    >
+      <div className="absolute top-14 right-4 w-80 bg-background border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg overflow-hidden">
+        {/* User info */}
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center">
+            <Avatar className="h-10 w-10 mr-3">
+              <AvatarImage 
+                src="https://github.com/shadcn.png" 
+                alt="User profile"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40x40?text=User';
+                }}
+              />
+              <AvatarFallback>
+                <User className="h-5 w-5" />
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-medium">Your Name</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">example@email.com</p>
+            </div>
+          </div>
+          <Link 
+            to="/account" 
+            className="mt-3 block text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            onClick={onClose}
           >
-            <div className="flex flex-col items-center space-y-2">
-              <div className="h-10 w-10 rounded-full bg-white border flex items-center justify-center dark:border-gray-600">
-                <Sun className="h-5 w-5 text-amber-500" />
-              </div>
-              <RadioGroupItem 
-                value="light" 
-                id="theme-light" 
-                className="sr-only" 
-              />
-              <Label 
-                htmlFor="theme-light"
-                className={`text-xs cursor-pointer ${theme === 'light' ? 'font-bold' : ''}`}
-              >
-                Light
-              </Label>
-            </div>
-            
-            <div className="flex flex-col items-center space-y-2">
-              <div className="h-10 w-10 rounded-full bg-gray-900 border flex items-center justify-center dark:border-gray-600">
-                <Moon className="h-5 w-5 text-gray-200" />
-              </div>
-              <RadioGroupItem 
-                value="dark" 
-                id="theme-dark" 
-                className="sr-only" 
-              />
-              <Label 
-                htmlFor="theme-dark"
-                className={`text-xs cursor-pointer ${theme === 'dark' ? 'font-bold' : ''}`}
-              >
-                Dark
-              </Label>
-            </div>
-            
-            <div className="flex flex-col items-center space-y-2">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-white to-gray-900 border flex items-center justify-center dark:border-gray-600">
-                <Laptop className="h-5 w-5 text-blue-500" />
-              </div>
-              <RadioGroupItem 
-                value="system" 
-                id="theme-system" 
-                className="sr-only" 
-              />
-              <Label 
-                htmlFor="theme-system"
-                className={`text-xs cursor-pointer ${theme === 'system' ? 'font-bold' : ''}`}
-              >
-                System
-              </Label>
-            </div>
-          </RadioGroup>
+            Manage your Google Account
+          </Link>
         </div>
         
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full justify-start gap-2" 
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Log out</span>
-        </Button>
+        {/* Menu items */}
+        <div className="py-2">
+          <MenuItem icon={<User className="h-5 w-5" />} text="Your channel" to="/channel/Your%20Name" onClick={onClose} />
+          <MenuItem icon={<Settings className="h-5 w-5" />} text="Settings" to="/settings" onClick={onClose} />
+          
+          {/* Theme toggle */}
+          <button 
+            className="w-full flex items-center py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-5 w-5 mr-3 text-gray-700 dark:text-gray-300" />
+            ) : (
+              <Moon className="h-5 w-5 mr-3 text-gray-700 dark:text-gray-300" />
+            )}
+            <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+          </button>
+          
+          <MenuItem icon={<HelpCircle className="h-5 w-5" />} text="Help" to="/help" onClick={onClose} />
+          <MenuItem icon={<LogOut className="h-5 w-5" />} text="Sign out" to="/logout" onClick={onClose} />
+        </div>
       </div>
     </div>
+  );
+};
+
+interface MenuItemProps {
+  icon: React.ReactNode;
+  text: string;
+  to: string;
+  onClick: () => void;
+}
+
+const MenuItem: React.FC<MenuItemProps> = ({ icon, text, to, onClick }) => {
+  return (
+    <Link 
+      to={to} 
+      className="flex items-center py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800"
+      onClick={onClick}
+    >
+      <span className="mr-3 text-gray-700 dark:text-gray-300">{icon}</span>
+      <span>{text}</span>
+    </Link>
   );
 };
 

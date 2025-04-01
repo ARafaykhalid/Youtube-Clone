@@ -10,6 +10,7 @@ import Library from "./pages/Library";
 import SearchResults from "./pages/SearchResults";
 import Shorts from "./pages/Shorts";
 import NotFound from "./pages/NotFound";
+import Channel from "./pages/Channel";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +36,7 @@ const App = () => (
             <Route path="/sports" element={<Index category="sports" />} />
             <Route path="/learning" element={<Index category="learning" />} />
             <Route path="/music" element={<Index category="music" />} />
-            <Route path="/channel/:channelName" element={<Index category="channel" />} />
+            <Route path="/channel/:channelName" element={<Channel />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
