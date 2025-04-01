@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}"
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -25,7 +26,15 @@ export default {
         'destructive-foreground': 'hsl(var(--destructive-foreground))',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))'
+        ring: 'hsl(var(--ring))',
+        // YouTube specific colors
+        youtube: {
+          red: "#FF0000",
+          dark: "#0F0F0F",
+          light: "#F9F9F9",
+          gray: "#606060",
+          lightGray: "#AAAAAA"
+        }
       },
       borderRadius: {
         lg: 'var(--radius)',

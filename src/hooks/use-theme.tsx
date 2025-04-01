@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
@@ -24,7 +23,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
-  storageKey = 'vite-ui-theme',
+  storageKey = 'youtube-theme',
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
@@ -43,8 +42,10 @@ export function ThemeProvider({
         ? 'dark'
         : 'light';
       root.classList.add(systemTheme);
+      document.body.classList.toggle('dark-mode', systemTheme === 'dark');
     } else {
       root.classList.add(theme);
+      document.body.classList.toggle('dark-mode', theme === 'dark');
     }
     
     // Store preference in localStorage
@@ -59,7 +60,9 @@ export function ThemeProvider({
       if (theme === 'system') {
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
-        root.classList.add(mediaQuery.matches ? 'dark' : 'light');
+        const isDark = mediaQuery.matches;
+        root.classList.add(isDark ? 'dark' : 'light');
+        document.body.classList.toggle('dark-mode', isDark);
       }
     };
     

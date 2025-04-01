@@ -35,19 +35,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -79,6 +72,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -98,4 +92,95 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Explicitly set colors for light mode */
+  :root:not(.dark) {
+    color-scheme: light;
+    color: #0f172a;
+  }
+  
+  /* Dark mode colors */
+  .dark {
+    color-scheme: dark;
+    color: #f8fafc;
+  }
+}
+
+/* YouTube specific styles */
+.youtube-red {
+  color: #FF0000;
+}
+
+body.shorts-mode {
+  background-color: #000;
+  color: #fff;
+}
+
+body.shorts-mode .dark {
+  background-color: #000;
+}
+
+/* Image placeholder fallbacks */
+img {
+  @apply transition-all duration-200;
+}
+
+img[src*="placeholder.com"] {
+  @apply opacity-70;
+}
+
+img[src*="ui-avatars.com"] {
+  @apply shadow-sm;
+}
+
+/* Improved channel avatars */
+.channel-avatar {
+  @apply rounded-full overflow-hidden border-2 border-gray-100 dark:border-gray-800;
+}
+
+/* Base text colors */
+.text-foreground {
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.text-muted {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+/* Card and UI element styles */
+.card {
+  @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm;
+}
+
+/* Light mode specific overrides */
+.light-mode-text {
+  @apply text-gray-900;
+}
+
+.light-mode-bg {
+  @apply bg-white;
+}
+
+/* Improved scrollbars for dark mode */
+* {
+  scrollbar-color: rgba(100, 100, 100, 0.5) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.5);
+  border-radius: 20px;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.3);
 }

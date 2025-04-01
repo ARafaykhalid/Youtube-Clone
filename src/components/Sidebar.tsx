@@ -143,9 +143,13 @@ const ChannelMenuItem: React.FC<ChannelMenuItemProps> = ({ channelName, imageUrl
       <img 
         src={imageUrl} 
         alt={channelName} 
-        className="w-6 h-6 rounded-full object-cover"
+        className="w-6 h-6 rounded-full channel-avatar object-cover"
         onError={(e) => {
-          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/24x24?text=YT';
+          const initial = channelName.charAt(0).toUpperCase();
+          const colors = ["4285F4", "DB4437", "F4B400", "0F9D58", "4285F4", "DB4437"];
+          const colorIndex = channelName.length % colors.length;
+          (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${initial}&background=${colors[colorIndex]}&color=fff&size=24`;
+          (e.target as HTMLImageElement).onerror = null;
         }} 
       />
       {isOpen && <span className="ml-5 text-sm font-medium text-gray-700 dark:text-gray-300">{channelName}</span>}

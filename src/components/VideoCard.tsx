@@ -34,16 +34,20 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
             <img 
               src={video.channelImageUrl} 
               alt={video.channelName} 
-              className="w-9 h-9 rounded-full object-cover hover:opacity-90 transition-opacity"
+              className="w-9 h-9 rounded-full channel-avatar object-cover hover:opacity-90 transition-opacity"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/36x36?text=YT';
+                const initial = video.channelName.charAt(0).toUpperCase();
+                const colors = ["4285F4", "DB4437", "F4B400", "0F9D58", "4285F4", "DB4437"];
+                const colorIndex = video.channelName.length % colors.length;
+                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${initial}&background=${colors[colorIndex]}&color=fff&size=36`;
+                (e.target as HTMLImageElement).onerror = null;
               }}
             />
           </Link>
         </div>
         <div className="flex-grow">
           <Link to={`/watch/${video.id}`}>
-            <h3 className="text-base font-medium line-clamp-2 text-left text-foreground">
+            <h3 className="text-base font-medium line-clamp-2 text-left text-gray-900 dark:text-white">
               {video.title}
             </h3>
           </Link>

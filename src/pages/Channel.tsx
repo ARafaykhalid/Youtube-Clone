@@ -131,16 +131,19 @@ const Channel = () => {
         {/* Channel Banner */}
         <div className="h-32 sm:h-48 w-full relative overflow-hidden">
           {bannerUrl ? (
-            <img 
-              src={bannerUrl} 
-              alt={`${channelName} banner`} 
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                // Fallback to color banner if image fails to load
-                (e.target as HTMLElement).style.backgroundColor = bannerColor;
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+            <div className="w-full h-full" style={{ backgroundColor: bannerColor }}>
+              <img 
+                src={bannerUrl} 
+                alt={`${channelName} banner`} 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Just hide the image and show the background color if it fails to load
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  // Prevent infinite error loops
+                  (e.target as HTMLImageElement).onerror = null;
+                }}
+              />
+            </div>
           ) : (
             <div 
               className="h-full w-full" 
@@ -150,7 +153,7 @@ const Channel = () => {
         </div>
         
         {/* Channel Header */}
-        <div className={`px-6 py-4 relative ${theme === "dark" ? "bg-zinc-900" : "bg-white"} border-b`}>
+        <div className="px-6 py-4 relative bg-white dark:bg-zinc-900 border-b">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div className="flex flex-col md:flex-row gap-6 items-start md:items-end">
               {/* Channel Avatar (positioned over the banner) */}
@@ -160,20 +163,24 @@ const Channel = () => {
                   alt={channelName}
                   className="w-24 h-24 rounded-full object-cover border-4 border-background shadow-md"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80x80?text=Channel';
+                    // Use a placeholder with the channel name's first letter
+                    const channelInitial = (decodeURIComponent(channelName || "C")).charAt(0).toUpperCase();
+                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${channelInitial}&background=${bannerColor.replace('#', '')}&color=fff&size=80`;
+                    // Prevent infinite error loops
+                    (e.target as HTMLImageElement).onerror = null;
                   }}
                 />
               </div>
               
               <div className="flex-1">
-                <h1 className={`text-2xl font-bold ${theme === "dark" ? "text-white" : "text-black"}`}>
+                <h1 className="text-2xl font-bold text-black dark:text-white">
                   {decodeURIComponent(channelName || "")}
                 </h1>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
-                  <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {subscriberCount}
                   </p>
-                  <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {channelVideos.length} videos
                   </p>
                 </div>
@@ -238,7 +245,7 @@ const Channel = () => {
                 <VideoGrid videos={channelVideos} />
               ) : (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <p className={`text-lg ${theme === "dark" ? "text-white" : "text-black"}`}>
+                  <p className="text-lg text-black dark:text-white">
                     No videos found for this channel.
                   </p>
                 </div>
@@ -247,7 +254,7 @@ const Channel = () => {
             
             <TabsContent value="playlists" className="pt-6">
               <div className="flex flex-col items-center justify-center py-12">
-                <p className={`text-lg ${theme === "dark" ? "text-white" : "text-black"}`}>
+                <p className="text-lg text-black dark:text-white">
                   No playlists available.
                 </p>
               </div>
@@ -255,7 +262,7 @@ const Channel = () => {
             
             <TabsContent value="community" className="pt-6">
               <div className="flex flex-col items-center justify-center py-12">
-                <p className={`text-lg ${theme === "dark" ? "text-white" : "text-black"}`}>
+                <p className="text-lg text-black dark:text-white">
                   No community posts yet.
                 </p>
               </div>
@@ -263,7 +270,7 @@ const Channel = () => {
             
             <TabsContent value="channels" className="pt-6">
               <div className="flex flex-col items-center justify-center py-12">
-                <p className={`text-lg ${theme === "dark" ? "text-white" : "text-black"}`}>
+                <p className="text-lg text-black dark:text-white">
                   This channel hasn't featured any other channels.
                 </p>
               </div>
@@ -272,10 +279,10 @@ const Channel = () => {
             <TabsContent value="about" className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2">
-                  <h3 className={`text-lg font-semibold mb-4 ${theme === "dark" ? "text-white" : "text-black"}`}>
+                  <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">
                     Description
                   </h3>
-                  <p className={`${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                  <p className="text-gray-700 dark:text-gray-300">
                     {channelVideos.length > 0 
                       ? `This channel is focused on ${channelVideos[0].category || "various"} content. 
                         Join ${subscriberCount} and discover great videos.`
@@ -283,26 +290,26 @@ const Channel = () => {
                   </p>
                   
                   <div className="mt-8">
-                    <h3 className={`text-lg font-semibold mb-4 ${theme === "dark" ? "text-white" : "text-black"}`}>
+                    <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">
                       Details
                     </h3>
-                    <p className={`${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                    <p className="text-gray-700 dark:text-gray-300">
                       Location: Worldwide
                     </p>
                   </div>
                 </div>
                 
                 <div className="bg-secondary dark:bg-zinc-800 rounded-xl p-4">
-                  <h3 className={`text-md font-semibold mb-4 ${theme === "dark" ? "text-white" : "text-black"}`}>
+                  <h3 className="text-md font-semibold mb-4 text-black dark:text-white">
                     Stats
                   </h3>
-                  <p className={`${theme === "dark" ? "text-gray-300" : "text-gray-700"} mb-2`}>
+                  <p className="text-gray-700 dark:text-gray-300 mb-2">
                     Joined: January 2022
                   </p>
-                  <p className={`${theme === "dark" ? "text-gray-300" : "text-gray-700"} mb-2`}>
+                  <p className="text-gray-700 dark:text-gray-300 mb-2">
                     {subscriberCount}
                   </p>
-                  <p className={`${theme === "dark" ? "text-gray-300" : "text-gray-700"} mb-4`}>
+                  <p className="text-gray-700 dark:text-gray-300 mb-4">
                     {Math.floor(Math.random() * 10000000).toLocaleString()} views
                   </p>
                   

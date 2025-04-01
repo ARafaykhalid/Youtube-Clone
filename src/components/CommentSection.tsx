@@ -9,11 +9,15 @@ interface CommentSectionProps {
 
 const CommentSection: React.FC<CommentSectionProps> = ({ comments, totalComments }) => {
   const [newComment, setNewComment] = useState('');
+  const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitted comment:', newComment);
-    setNewComment('');
+    if (newComment.trim()) {
+      console.log('Submitted comment:', newComment);
+      setNewComment('');
+      setIsCommentFormOpen(false);
+    }
     // In a real app, this would add the comment to the list
   };
 
@@ -31,31 +35,46 @@ const CommentSection: React.FC<CommentSectionProps> = ({ comments, totalComments
             (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40x40?text=User';
           }}
         />
-        <form onSubmit={handleSubmitComment} className="flex-grow">
-          <input
-            type="text"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
-            className="w-full p-2 border-b border-gray-300 dark:border-gray-700 focus:border-b-2 focus:border-gray-800 dark:focus:border-gray-400 outline-none bg-transparent text-foreground"
-          />
-          <div className="flex justify-end mt-2 space-x-2">
-            <button 
-              type="button" 
-              className="px-3 py-1 text-sm font-medium rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300"
-              onClick={() => setNewComment('')}
+        <div className="flex-grow">
+          {!isCommentFormOpen ? (
+            <div 
+              className="w-full p-2 border-b border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 cursor-pointer"
+              onClick={() => setIsCommentFormOpen(true)}
             >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              disabled={!newComment.trim()}
-              className="px-3 py-1 text-sm font-medium rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/50 dark:text-blue-200 dark:hover:bg-blue-800/70 disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
-            >
-              Comment
-            </button>
-          </div>
-        </form>
+              Add a comment...
+            </div>
+          ) : (
+            <form onSubmit={handleSubmitComment} className="w-full">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                autoFocus
+                className="w-full p-2 border-b border-gray-300 dark:border-gray-700 focus:border-b-2 focus:border-gray-800 dark:focus:border-gray-400 outline-none bg-transparent text-foreground"
+              />
+              <div className="flex justify-end mt-2 space-x-2">
+                <button 
+                  type="button" 
+                  className="px-3 py-1 text-sm font-medium rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-300"
+                  onClick={() => {
+                    setIsCommentFormOpen(false);
+                    setNewComment('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={!newComment.trim()}
+                  className="px-3 py-1 text-sm font-medium rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/50 dark:text-blue-200 dark:hover:bg-blue-800/70 disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
+                >
+                  Comment
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
       
       {/* Comments List */}
