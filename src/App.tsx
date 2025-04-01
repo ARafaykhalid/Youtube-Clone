@@ -1,9 +1,10 @@
 import { Toaster } from "sonner";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/use-theme";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { initializeAppData } from "@/data/videos";
 import { initializeUserData } from "@/data/userData";
+import { initializeNotifications } from "@/data/notifications";
 import Index from "./pages/Index";
 import VideoPlayer from "./pages/VideoPlayer";
 import Library from "./pages/Library";
@@ -12,6 +13,8 @@ import Shorts from "./pages/Shorts";
 import NotFound from "./pages/NotFound";
 import Channel from "./pages/Channel";
 import EditChannel from "./pages/EditChannel";
+import MyChannel from "./pages/MyChannel";
+import NotificationDebug from "./components/NotificationDebug";
 
 // ScrollToTop component to handle scroll restoration on navigation
 function ScrollToTop() {
@@ -26,15 +29,33 @@ function ScrollToTop() {
 
 // AppRoutes component to include the ScrollToTop component
 function AppRoutes() {
+  // Only show notification debug in development mode
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const [showDebug, setShowDebug] = useState(false);
+  
+  // Listen for key combo Ctrl+Shift+N to toggle debug panel
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'N') {
+        setShowDebug(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  
   return (
     <>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/watch/:videoId" element={<VideoPlayer />} />
+        <Route path="/video/:videoId" element={<VideoPlayer />} />
         <Route path="/library" element={<Library />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/shorts" element={<Shorts />} />
+        <Route path="/shorts/:videoId" element={<Shorts />} />
         <Route path="/explore" element={<Index category="explore" />} />
         <Route path="/subscriptions" element={<Index category="subscriptions" />} />
         <Route path="/your-videos" element={<Library tab="your-videos" />} />
@@ -59,10 +80,14 @@ function AppRoutes() {
         {/* Channel routes */}
         <Route path="/channel/:channelName" element={<Channel />} />
         <Route path="/channel/edit" element={<EditChannel />} />
+        <Route path="/my-channel" element={<MyChannel />} />
         
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      
+      {/* Notification Debug Panel - only shown when enabled */}
+      {isDevelopment && showDebug && <NotificationDebug />}
     </>
   );
 }
@@ -72,6 +97,7 @@ const App = () => {
   useEffect(() => {
     initializeAppData();
     initializeUserData();
+    initializeNotifications();
   }, []);
 
   return (

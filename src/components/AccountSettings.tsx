@@ -63,11 +63,11 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ onClose }) => {
         
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Link 
-            to={`/channel/${encodeURIComponent(userData.username)}`}
+            to="/my-channel"
             className="w-full py-1.5 px-3 text-sm text-center rounded-full bg-primary text-primary-foreground font-medium"
             onClick={onClose}
           >
-            View Channel
+            My Channel
           </Link>
           <Link 
             to="/channel/edit" 
@@ -82,7 +82,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ onClose }) => {
       {/* Menu items */}
       <div className="py-1">
         <MenuItem icon={<User className="h-4 w-4" />} label="Your channel" 
-          to={`/channel/${encodeURIComponent(userData.username)}`} onClick={onClose}
+          to="/my-channel" onClick={onClose}
         />
         <MenuItem icon={<FileVideo className="h-4 w-4" />} label="Your videos" 
           to="/your-videos" onClick={onClose}

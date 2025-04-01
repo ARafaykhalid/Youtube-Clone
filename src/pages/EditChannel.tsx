@@ -192,7 +192,7 @@ const EditChannel = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="bio">Channel Description</Label>
+                      <Label htmlFor="bio">Channel Bio</Label>
                       <Textarea
                         id="bio"
                         name="bio"
@@ -203,6 +203,21 @@ const EditChannel = () => {
                       />
                       <p className="text-xs text-muted-foreground">
                         Briefly describe your channel content and what viewers can expect
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Detailed Description</Label>
+                      <Textarea
+                        id="description"
+                        name="description"
+                        value={formData.description || ''}
+                        onChange={handleInputChange}
+                        placeholder="Add a more detailed description of your channel, content, upload schedule, and more..."
+                        className="min-h-48"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Provide a comprehensive overview of your channel, upcoming content plans, and any additional information for your viewers
                       </p>
                     </div>
                   </CardContent>

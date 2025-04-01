@@ -1,20 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import CommentSection from '@/components/CommentSection';
 import RelatedVideos from '@/components/RelatedVideos';
 import VideoPlayerComponent from '@/components/VideoPlayer';
-import { getVideoById, getRelatedVideos, comments, isChannelSubscribed, toggleChannelSubscription, saveLikedVideo } from '@/data/videos';
+import { getVideoById, getRelatedVideos, comments, isChannelSubscribed, toggleChannelSubscription, saveLikedVideo, videos, type Video } from '@/data/videos';
 import { getLongVideosById } from '@/data/longVideos';
-import { getShortsById } from '@/data/shortsVideos';
+import { getShortsById, type ShortsVideo } from '@/data/shortsVideos';
 import { ThumbsUp, ThumbsDown, Share2, Save, MoreHorizontal, Users, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+// Combine the properties of Video and ShortsVideo
+type MergedVideo = {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  channelName: string;
+  channelImageUrl: string;
+  views: string;
+  timestamp: string;
+  duration: string;
+  videoId: string;
+  likes: number;
+  description: string;
+  isSubscribed?: boolean;
+  category?: string;
+  isLiked?: boolean;
+  isShort?: boolean;
+  dislikes: number;
+  comments?: number;
+  isVerified?: boolean;
+  isLive?: boolean;
+  isNewVideo?: boolean;
+};
+
 const VideoPlayer = () => {
   const { videoId } = useParams<{ videoId: string }>();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -23,13 +48,46 @@ const VideoPlayer = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [youtubeDescription, setYoutubeDescription] = useState('');
   
-  // Try to find the video in longVideos first, then check shortsVideos
-  const video = getVideoById(videoId || '') || 
-                getLongVideosById(videoId || '') || 
-                getShortsById(videoId || '');
-                
-  const relatedVideos = getRelatedVideos(videoId || '', 8);
-
+  // Find the video using multiple strategies
+  const findVideo = (): MergedVideo | null => {
+    if (!videoId) return null;
+    
+    // Strategy 1: Direct match by id
+    let foundVideo = getVideoById(videoId);
+    if (foundVideo) return foundVideo;
+    
+    // Strategy 2: Check long videos
+    foundVideo = getLongVideosById(videoId);
+    if (foundVideo) return foundVideo;
+    
+    // Strategy 3: Check shorts videos
+    const shortsVideo = getShortsById(videoId);
+    if (shortsVideo) {
+      // Convert shorts video to the merged type
+      return {
+        ...shortsVideo,
+        dislikes: 0,
+        description: shortsVideo.description || `Short video by ${shortsVideo.channelName}`
+      };
+    }
+    
+    // Strategy 4: Check by YouTube videoId
+    foundVideo = videos.find(v => v.videoId === videoId);
+    if (foundVideo) return foundVideo;
+    
+    // If we're coming from a link with /watch/ try to use that ID format to find the video
+    if (location.pathname.includes('/watch/')) {
+      // This might be a YouTube video ID, so search by that
+      foundVideo = videos.find(v => v.videoId === videoId);
+      if (foundVideo) return foundVideo;
+    }
+    
+    return null;
+  };
+  
+  const video = findVideo();
+  const relatedVideos = video ? getRelatedVideos(video.id, 8) : [];
+  
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -56,7 +114,15 @@ const VideoPlayer = () => {
       
       // Fetch YouTube video description if available
       fetchYoutubeVideoInfo(video.videoId);
+      
+      // Update page title
+      document.title = `${video.title} - YouTube Clone`;
     }
+    
+    return () => {
+      // Reset title when unmounting
+      document.title = 'YouTube Clone';
+    };
   }, [videoId, video]);
 
   const fetchYoutubeVideoInfo = async (youtubeId: string) => {
@@ -156,14 +222,24 @@ const VideoPlayer = () => {
   };
 
   const handleShare = () => {
-    // Copy the current URL to clipboard
-    navigator.clipboard.writeText(window.location.href);
+    // Generate a shareable link using the videoId property if available
+    const shareUrl = video.videoId 
+      ? `${window.location.origin}/video/${video.videoId}`
+      : window.location.href;
+    
+    navigator.clipboard.writeText(shareUrl);
     toast.success('Link copied to clipboard');
   };
 
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
   };
+
+  // Ensure we're using the YouTube videoId for embedding
+  const embedVideoId = video.videoId || video.id;
+  
+  // Get safe dislikes value - some videos might not have this property
+  const videoDislikesCount = video.dislikes || 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -183,7 +259,7 @@ const VideoPlayer = () => {
             {/* Video Player */}
             <div className="aspect-video rounded-xl overflow-hidden bg-black">
               <iframe 
-                src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&rel=0&modestbranding=1`} 
+                src={`https://www.youtube.com/embed/${embedVideoId}?autoplay=1&rel=0&modestbranding=1`} 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowFullScreen
                 className="w-full h-full"

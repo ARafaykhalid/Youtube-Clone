@@ -7,6 +7,7 @@ import { videos, subscribedChannels } from '@/data/videos';
 import { longVideos } from '@/data/longVideos';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface IndexProps {
   category?: string;
@@ -20,6 +21,8 @@ const Index: React.FC<IndexProps> = ({ category }) => {
   const [filteredVideos, setFilteredVideos] = useState(longVideos);
   const [pageTitle, setPageTitle] = useState('Home');
   const [activeChip, setActiveChip] = useState('All');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Available category chips
   const categoryChips = [
@@ -58,63 +61,92 @@ const Index: React.FC<IndexProps> = ({ category }) => {
     'Photography': 'photography'
   };
 
+  // Reverse mapping from URL path to category display name
+  const reverseCategories: Record<string, string> = Object.entries(categoryMap).reduce(
+    (acc, [key, value]) => ({
+      ...acc,
+      [value.toLowerCase()]: key
+    }),
+    {}
+  );
+
   useEffect(() => {
-    // Determine the proper category from either props or URL params
-    const urlCategory = params.category || category || location.pathname.slice(1);
+    setLoading(true);
+    setError(null);
     
-    if (urlCategory === 'subscriptions') {
-      // Filter for subscribed channels
-      const subscribedVideos = longVideos.filter(video => 
-        subscribedChannels.some(channel => channel.name === video.channelName)
-      );
-      setFilteredVideos(subscribedVideos);
-      setPageTitle('Subscriptions');
-      setActiveChip('All');
-    } else if (urlCategory === 'explore') {
-      // For explore page, show a mix of trending videos from different categories
-      const exploreVideos = longVideos
-        .sort(() => 0.5 - Math.random()) // Randomize for variety
-        .slice(0, 24); // Limit to 24 videos
-      setFilteredVideos(exploreVideos);
-      setPageTitle('Explore');
-      setActiveChip('All');
-    } else if (urlCategory && urlCategory !== 'channel' && urlCategory !== '/') {
-      // Map from URL category to actual category in videos
-      const categoryName = Object.entries(categoryMap)
-        .find(([_, value]) => value === urlCategory)?.[0] || 
-        Object.keys(categoryMap).find(key => key.toLowerCase() === urlCategory.toLowerCase()) || 
-        urlCategory;
+    try {
+      // Extract category from URL path
+      let urlCategory = params.category || category || '';
       
-      // If category is "learning", use "Education" for video filtering
-      const categoryForFilter = urlCategory === 'learning' ? 'education' : urlCategory;
+      // If we're at root path, it should be 'All'
+      if (location.pathname === '/') {
+        urlCategory = '';
+      }
       
-      // Filter by specific category
-      const categoryVideos = longVideos.filter(video => {
-        if (!video.category) return false;
+      // Basic route handling for special paths
+      if (urlCategory === 'subscriptions') {
+        // Filter for subscribed channels
+        const subscribedVideos = longVideos.filter(video => 
+          subscribedChannels.some(channel => channel.name === video.channelName)
+        );
+        setFilteredVideos(subscribedVideos);
+        setPageTitle('Subscriptions');
+        setActiveChip('All');
+      } else if (urlCategory === 'explore') {
+        // For explore page, show a mix of trending videos from different categories
+        const exploreVideos = longVideos
+          .sort(() => 0.5 - Math.random()) // Randomize for variety
+          .slice(0, 24); // Limit to 24 videos
+        setFilteredVideos(exploreVideos);
+        setPageTitle('Explore');
+        setActiveChip('All');
+      } else if (urlCategory && urlCategory !== 'channel' && urlCategory !== '/') {
+        // Get the display name from our mapping
+        const displayName = reverseCategories[urlCategory.toLowerCase()] || 
+                      urlCategory.charAt(0).toUpperCase() + urlCategory.slice(1);
         
-        // Check if video category matches the selected category (case insensitive)
-        return video.category.toLowerCase() === categoryForFilter.toLowerCase() ||
-               video.category.toLowerCase() === categoryName.toLowerCase();
-      });
-      
-      setFilteredVideos(categoryVideos.length > 0 ? categoryVideos : longVideos.slice(0, 8));
-      setPageTitle(categoryName.charAt(0).toUpperCase() + categoryName.slice(1));
-      
-      // Set active chip based on category
-      const matchingChip = Object.entries(categoryMap)
-        .find(([_, value]) => value.toLowerCase() === urlCategory.toLowerCase())?.[0] ||
-        Object.keys(categoryMap).find(key => key.toLowerCase() === urlCategory.toLowerCase());
-      
-      if (matchingChip) {
-        setActiveChip(matchingChip);
+        // Try multiple ways to match categories:
+        // 1. Direct match with URL category
+        // 2. Match with display name
+        // 3. Case insensitive match
+        const categoryVideos = longVideos.filter(video => {
+          if (!video.category) return false;
+          
+          const videoCategory = video.category.toLowerCase();
+          return videoCategory === urlCategory.toLowerCase() ||
+                 videoCategory === displayName.toLowerCase();
+        });
+        
+        if (categoryVideos.length > 0) {
+          setFilteredVideos(categoryVideos);
+        } else {
+          setFilteredVideos([]);
+          console.warn(`No videos found for category: ${urlCategory}`);
+        }
+        
+        // Set the page title
+        setPageTitle(displayName);
+        
+        // Set active chip based on category
+        const matchingChip = Object.keys(categoryMap).find(
+          key => key.toLowerCase() === displayName.toLowerCase() || 
+                 categoryMap[key].toLowerCase() === urlCategory.toLowerCase()
+        );
+        
+        setActiveChip(matchingChip || 'All');
       } else {
+        // Default to showing all videos
+        setFilteredVideos(longVideos);
+        setPageTitle('Home');
         setActiveChip('All');
       }
-    } else {
-      // Default to showing all videos
-      setFilteredVideos(longVideos);
-      setPageTitle('Home');
-      setActiveChip('All');
+    } catch (err) {
+      console.error('Error filtering videos:', err);
+      setError('Something went wrong. Please try again.');
+      setFilteredVideos([]);
+      toast.error('Error loading videos');
+    } finally {
+      setLoading(false);
     }
   }, [category, params, location.pathname]);
 
@@ -143,7 +175,9 @@ const Index: React.FC<IndexProps> = ({ category }) => {
       <main 
         className={cn(
           'pt-16 pb-12 transition-all duration-300',
-          sidebarOpen ? 'ml-60' : 'ml-[72px]'
+          sidebarOpen ? 'ml-60' : 'ml-[72px]',
+          'md:ml-[72px] lg:ml-[72px]',
+          sidebarOpen && 'md:ml-60 lg:ml-60'
         )}
       >
         {category !== 'channel' && (
@@ -174,7 +208,19 @@ const Index: React.FC<IndexProps> = ({ category }) => {
             <h1 className="text-2xl font-bold mb-6">{pageTitle}</h1>
           )}
           
-          {filteredVideos.length > 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center min-h-[50vh]">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900 dark:border-gray-100"></div>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Loading videos...</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center min-h-[50vh]">
+              <h2 className="text-xl font-medium mb-2 text-red-500">{error}</h2>
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          ) : filteredVideos.length > 0 ? (
             <VideoGrid videos={filteredVideos} />
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[50vh]">

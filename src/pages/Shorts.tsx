@@ -46,6 +46,16 @@ const Shorts = () => {
     // Auto close sidebar for better shorts viewing experience
     setSidebarOpen(false);
     
+    // Show construction toast
+    toast.info(
+      "Shorts functionality is under construction! Feel free to contribute to this feature.", 
+      { 
+        duration: 5000,
+        position: "top-center",
+        icon: "🚧"
+      }
+    );
+    
     return () => {
       // Clean up any shorts-specific classes or modifications
     };

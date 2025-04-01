@@ -84,6 +84,19 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onClose, onUpda
     }
   };
 
+  // Get correct video URL based on notification type
+  const getVideoUrl = (notification: Notification) => {
+    if (!notification.videoId) return '';
+    
+    // If it's a shorts notification, use shorts URL
+    if (notification.type === 'upload' && notification.message.toLowerCase().includes('short')) {
+      return `/shorts/${notification.videoId}`;
+    }
+    
+    // For regular videos, use video URL
+    return `/video/${notification.videoId}`;
+  };
+
   return (
     <div className="absolute top-14 right-0 w-80 sm:w-96 bg-background border border-border rounded-lg shadow-lg z-50 max-h-[80vh] overflow-auto">
       <div className="sticky top-0 flex items-center justify-between p-4 border-b bg-background z-10">
@@ -150,9 +163,15 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onClose, onUpda
                 )}
               </div>
               
-              <div className="flex-grow mr-2">
+              <div className="flex-1 min-w-0">
                 {notification.videoId ? (
-                  <Link to={`/watch/${notification.videoId}`} onClick={onClose}>
+                  <Link 
+                    to={getVideoUrl(notification)} 
+                    onClick={() => {
+                      handleMarkAsRead(notification.id);
+                      onClose();
+                    }}
+                  >
                     <div className="flex flex-col">
                       <div className="flex items-start">
                         <span className="text-lg mr-2">{getNotificationIcon(notification.type)}</span>
@@ -174,7 +193,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onClose, onUpda
                 )}
               </div>
               
-              <div className="flex flex-col space-y-1 absolute top-2 right-2">
+              <div className="flex flex-col ml-2 gap-1">
                 {!notification.isRead && (
                   <Button 
                     variant="ghost" 
@@ -190,7 +209,11 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onClose, onUpda
                   variant="ghost" 
                   size="icon" 
                   className="h-6 w-6" 
-                  onClick={() => handleDeleteNotification(notification.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleDeleteNotification(notification.id);
+                  }}
                   title="Remove"
                 >
                   <X className="h-3 w-3" />

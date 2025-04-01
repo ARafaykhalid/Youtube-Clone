@@ -18,6 +18,10 @@ export interface Video {
   isSubscribed?: boolean;
   category?: string;
   isLiked?: boolean;
+  isVerified?: boolean;
+  isLive?: boolean;
+  isNewVideo?: boolean;
+  isShort?: boolean;
 }
 
 export interface Comment {
@@ -249,5 +253,60 @@ export const saveLikedVideo = (videoId: string, liked: boolean) => {
     localStorage.setItem('youtube-clone-liked-videos', JSON.stringify(likedVideoIds));
   } catch (e) {
     console.error('Failed to save liked video', e);
+  }
+};
+
+// Get user's uploaded videos
+export const getUserVideos = (): Video[] => {
+  try {
+    const userVideosJson = localStorage.getItem('youtube-clone-user-videos');
+    if (userVideosJson) {
+      const userVideos = JSON.parse(userVideosJson);
+      if (Array.isArray(userVideos)) {
+        return userVideos;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load user videos from localStorage', e);
+  }
+  
+  // Return empty array if no videos found
+  return [];
+};
+
+// Save a new user video
+export const saveUserVideo = (video: Video): boolean => {
+  try {
+    const userVideos = getUserVideos();
+    
+    // Generate ID if not provided
+    if (!video.id) {
+      video.id = `uv-${Date.now()}`;
+    }
+    
+    // Add video to user videos
+    userVideos.push(video);
+    
+    // Save to localStorage
+    localStorage.setItem('youtube-clone-user-videos', JSON.stringify(userVideos));
+    return true;
+  } catch (e) {
+    console.error('Failed to save user video', e);
+    return false;
+  }
+};
+
+// Delete a user video
+export const deleteUserVideo = (videoId: string): boolean => {
+  try {
+    const userVideos = getUserVideos();
+    const updatedVideos = userVideos.filter(video => video.id !== videoId);
+    
+    // Save updated array to localStorage
+    localStorage.setItem('youtube-clone-user-videos', JSON.stringify(updatedVideos));
+    return true;
+  } catch (e) {
+    console.error('Failed to delete user video', e);
+    return false;
   }
 };

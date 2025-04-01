@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ThumbsUp, ThumbsDown, Send, MessageSquare } from 'lucide-react';
 import { Comment } from '@/data/videos';
 import { Button } from './ui/button';
+import { getUserProfile } from '@/data/userData';
+import { toast } from 'sonner';
 
 interface CommentSectionProps {
   comments: Comment[];
@@ -9,43 +11,84 @@ interface CommentSectionProps {
   videoId?: string;
 }
 
-// Function to generate a random user profile picture
-const getRandomProfilePic = (): string => {
-  const gender = Math.random() > 0.5 ? 'men' : 'women';
-  const id = Math.floor(Math.random() * 99) + 1;
-  return `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
+// Function to get user's profile picture from userData
+const getUserProfilePic = (): string => {
+  const userProfile = getUserProfile();
+  return userProfile.profilePicture;
+};
+
+// Function to get user's display name from userData
+const getUserDisplayName = (): string => {
+  const userProfile = getUserProfile();
+  return userProfile.displayName;
 };
 
 const CommentSection: React.FC<CommentSectionProps> = ({ comments: initialComments, totalComments, videoId }) => {
   const [newComment, setNewComment] = useState('');
   const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [comments, setComments] = useState<Comment[]>(initialComments || []);
+  const [userProfilePic, setUserProfilePic] = useState(getUserProfilePic());
+  const [userDisplayName, setUserDisplayName] = useState(getUserDisplayName());
 
   // Load comments from localStorage when component mounts
   useEffect(() => {
-    if (videoId) {
-      try {
-        const savedComments = localStorage.getItem(`youtube-clone-comments-${videoId}`);
-        if (savedComments) {
+    if (!videoId) {
+      // If no videoId provided, just use initial comments but don't persist
+      setComments(initialComments || []);
+      return;
+    }
+
+    try {
+      const storageKey = `youtube-clone-comments-${videoId}`;
+      const savedComments = localStorage.getItem(storageKey);
+      
+      if (savedComments) {
+        try {
           const parsedComments = JSON.parse(savedComments);
-          if (Array.isArray(parsedComments) && parsedComments.length > 0) {
+          
+          if (Array.isArray(parsedComments)) {
+            // Successfully loaded comments from localStorage
             setComments(parsedComments);
+            return;
           }
+        } catch (parseError) {
+          console.error('Failed to parse comments from localStorage:', parseError);
+          // Continue to fallback options
         }
-      } catch (error) {
-        console.error('Failed to load comments from localStorage:', error);
+      }
+      
+      // Fallback: If we couldn't load from localStorage or it was invalid,
+      // use initial comments if available
+      if (initialComments && initialComments.length > 0) {
+        setComments(initialComments);
+        // Store initial comments in localStorage for future visits
+        localStorage.setItem(storageKey, JSON.stringify(initialComments));
+      }
+    } catch (error) {
+      console.error('Failed to load comments from localStorage:', error);
+      toast.error('Failed to load comments');
+      
+      // Fallback to initial comments in case of error
+      if (initialComments) {
+        setComments(initialComments);
       }
     }
-  }, [videoId]);
+    
+    // Update user profile data
+    setUserProfilePic(getUserProfilePic());
+    setUserDisplayName(getUserDisplayName());
+  }, [videoId, initialComments]);
 
   // Save comments to localStorage when they change
   useEffect(() => {
-    if (videoId && comments.length > 0) {
-      try {
-        localStorage.setItem(`youtube-clone-comments-${videoId}`, JSON.stringify(comments));
-      } catch (error) {
-        console.error('Failed to save comments to localStorage:', error);
-      }
+    if (!videoId) return;
+    
+    try {
+      const storageKey = `youtube-clone-comments-${videoId}`;
+      localStorage.setItem(storageKey, JSON.stringify(comments));
+    } catch (error) {
+      console.error('Failed to save comments to localStorage:', error);
+      toast.error('Failed to save your comment');
     }
   }, [comments, videoId]);
 
@@ -54,16 +97,18 @@ const CommentSection: React.FC<CommentSectionProps> = ({ comments: initialCommen
     if (newComment.trim()) {
       const newCommentObj: Comment = {
         id: `c${Date.now()}`,
-        username: 'You',
-        profilePic: getRandomProfilePic(),
+        username: userDisplayName,
+        profilePic: userProfilePic,
         content: newComment,
         timestamp: 'Just now',
         likes: 0
       };
       
-      setComments([newCommentObj, ...comments]);
+      setComments(prev => [newCommentObj, ...prev]);
       setNewComment('');
       setIsCommentFormOpen(false);
+      
+      toast.success('Comment added successfully');
     }
   };
 
@@ -82,13 +127,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({ comments: initialCommen
       {/* Add Comment Form */}
       <div className="flex mb-6">
         <img 
-          src="https://randomuser.me/api/portraits/men/85.jpg" 
-          alt="Your profile" 
+          src={userProfilePic} 
+          alt={userDisplayName} 
           className="w-10 h-10 rounded-full mr-3"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40x40?text=You';
-            // Also hide the error by stopping propagation
-            e.stopPropagation();
+            const initial = userDisplayName.charAt(0).toUpperCase();
+            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${initial}&background=4285F4&color=fff&size=40`;
+            // Prevent infinite error loops
+            (e.target as HTMLImageElement).onerror = null;
           }}
         />
         <div className="flex-grow">
@@ -99,7 +145,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ comments: initialCommen
             >
               <div className="flex items-center">
                 <MessageSquare className="h-4 w-4 mr-2" />
-                <span>Add a comment...</span>
+                <span>Add a comment as {userDisplayName}...</span>
               </div>
             </div>
           ) : (
@@ -129,7 +175,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ comments: initialCommen
                   disabled={!newComment.trim()}
                   variant="default"
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
+                  className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 rounded-full"
                 >
                   <Send className="h-4 w-4 mr-1" />
                   Comment
@@ -149,7 +195,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ comments: initialCommen
               alt={comment.username} 
               className="w-10 h-10 rounded-full mr-3"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${comment.username.charAt(0)}&background=random&color=fff&size=40`;
+                const initial = comment.username.charAt(0).toUpperCase();
+                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${initial}&background=4285F4&color=fff&size=40`;
                 // Prevent infinite error loops
                 (e.target as HTMLImageElement).onerror = null;
               }}

@@ -5,9 +5,15 @@ export interface UserProfile {
   displayName: string;
   email: string;
   bio: string;
+  description?: string;  // Longer channel description
   profilePicture: string;
+  bannerUrl?: string;    // URL for channel banner image
   bannerColor: string;
   subscriberCount: number;
+  subscribers?: number;   // Alias for subscriberCount for consistency
+  joinDate?: string;      // When the user joined
+  totalViews?: number;    // Total channel views
+  location?: string;      // User's location
   socialLinks: {
     website?: string;
     twitter?: string;
@@ -28,9 +34,15 @@ const defaultUserData: UserProfile = {
   displayName: 'Your Name',
   email: 'your.email@example.com',
   bio: 'Welcome to my channel! I create videos about technology, programming, and digital culture.',
+  description: 'This is my YouTube channel where I share tutorials, reviews, and insights about technology and programming. Subscribe for weekly content!',
   profilePicture: 'https://github.com/shadcn.png',
   bannerColor: '#4285F4',
+  bannerUrl: '',
   subscriberCount: 1024,
+  subscribers: 1024,
+  joinDate: new Date().toISOString(),
+  totalViews: 15240,
+  location: 'San Francisco, CA',
   socialLinks: {
     website: 'https://example.com',
     twitter: 'yourtwitter',
@@ -80,6 +92,8 @@ export const saveUserData = (data: Partial<UserProfile>): boolean => {
 
 // Get user profile data
 export const getUserProfile = (): UserProfile => {
+  // Ensure subscribers is always synced with subscriberCount for compatibility
+  userData.subscribers = userData.subscriberCount;
   return userData;
 };
 
