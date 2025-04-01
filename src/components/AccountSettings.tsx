@@ -1,14 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Settings, LogOut, Moon, Sun, HelpCircle } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { getUserProfile, updateUserSettings } from '@/data/userData';
+import { 
+  User, 
+  Settings, 
+  LogOut, 
+  Moon, 
+  Sun, 
+  Languages, 
+  HelpCircle,
+  Shield,
+  FileVideo,
+  UserCog
+} from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
-import { toast } from 'sonner';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { Switch } from './ui/switch';
 
 interface AccountSettingsProps {
   onClose: () => void;
@@ -16,79 +22,117 @@ interface AccountSettingsProps {
 
 const AccountSettings: React.FC<AccountSettingsProps> = ({ onClose }) => {
   const { theme, setTheme } = useTheme();
+  const userData = getUserProfile();
+  const [settings, setSettings] = useState(userData.settings);
   
-  const handleOutsideClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+  // Update theme when dark mode setting changes
+  useEffect(() => {
+    setTheme(settings.darkMode ? 'dark' : 'light');
+  }, [settings.darkMode, setTheme]);
+  
+  const handleSettingChange = (setting: keyof typeof settings, value: boolean) => {
+    setSettings(prev => {
+      const newSettings = { ...prev, [setting]: value };
+      // Save settings to user data
+      updateUserSettings(newSettings);
+      return newSettings;
+    });
   };
-
-  const handleThemeChange = (value: string) => {
-    setTheme(value as 'light' | 'dark' | 'system');
-    
-    const themeLabel = value === 'system' 
-      ? 'System' 
-      : `${value.charAt(0).toUpperCase() + value.slice(1)}`;
-    
-    toast(`${themeLabel} mode activated`);
-  };
-
+  
   return (
-    <div 
-      className="fixed inset-0 z-50 bg-transparent" 
-      onClick={handleOutsideClick}
-    >
-      <div className="absolute top-14 right-4 w-80 bg-background border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg overflow-hidden">
-        {/* User info */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-center">
-            <Avatar className="h-10 w-10 mr-3">
-              <AvatarImage 
-                src="https://github.com/shadcn.png" 
-                alt="User profile"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40x40?text=User';
-                }}
-              />
-              <AvatarFallback>
-                <User className="h-5 w-5" />
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium">Your Name</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">example@email.com</p>
-            </div>
+    <div className="absolute top-14 right-4 w-80 bg-background border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+      {/* User Profile Section */}
+      <div className="p-4 border-b">
+        <div className="flex items-center">
+          <img 
+            src={userData.profilePicture} 
+            alt={userData.displayName}
+            className="h-10 w-10 rounded-full mr-3"
+            onError={(e) => {
+              const initial = userData.displayName.charAt(0).toUpperCase();
+              const colors = ["4285F4", "DB4437", "F4B400", "0F9D58"];
+              const colorIndex = userData.username.length % colors.length;
+              (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${initial}&background=${colors[colorIndex]}&color=fff&size=40`;
+            }}
+          />
+          <div>
+            <h4 className="font-medium">{userData.displayName}</h4>
+            <p className="text-sm text-muted-foreground">@{userData.username}</p>
           </div>
-          <Link 
-            to="/account" 
-            className="mt-3 block text-sm text-blue-600 dark:text-blue-400 hover:underline"
-            onClick={onClose}
-          >
-            Manage your Google Account
-          </Link>
         </div>
         
-        {/* Menu items */}
-        <div className="py-2">
-          <MenuItem icon={<User className="h-5 w-5" />} text="Your channel" to="/channel/Your%20Name" onClick={onClose} />
-          <MenuItem icon={<Settings className="h-5 w-5" />} text="Settings" to="/settings" onClick={onClose} />
-          
-          {/* Theme toggle */}
-          <button 
-            className="w-full flex items-center py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Link 
+            to={`/channel/${encodeURIComponent(userData.username)}`}
+            className="w-full py-1.5 px-3 text-sm text-center rounded-full bg-primary text-primary-foreground font-medium"
+            onClick={onClose}
           >
-            {theme === 'dark' ? (
-              <Sun className="h-5 w-5 mr-3 text-gray-700 dark:text-gray-300" />
-            ) : (
-              <Moon className="h-5 w-5 mr-3 text-gray-700 dark:text-gray-300" />
-            )}
-            <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
-          </button>
-          
-          <MenuItem icon={<HelpCircle className="h-5 w-5" />} text="Help" to="/help" onClick={onClose} />
-          <MenuItem icon={<LogOut className="h-5 w-5" />} text="Sign out" to="/logout" onClick={onClose} />
+            View Channel
+          </Link>
+          <Link 
+            to="/channel/edit" 
+            className="w-full py-1.5 px-3 text-sm text-center rounded-full bg-muted hover:bg-muted/80 font-medium"
+            onClick={onClose}
+          >
+            Edit Channel
+          </Link>
         </div>
+      </div>
+      
+      {/* Menu items */}
+      <div className="py-1">
+        <MenuItem icon={<User className="h-4 w-4" />} label="Your channel" 
+          to={`/channel/${encodeURIComponent(userData.username)}`} onClick={onClose}
+        />
+        <MenuItem icon={<FileVideo className="h-4 w-4" />} label="Your videos" 
+          to="/your-videos" onClick={onClose}
+        />
+        <MenuItem icon={<UserCog className="h-4 w-4" />} label="Settings" 
+          to="/channel/edit?tab=settings" onClick={onClose}
+        />
+      </div>
+      
+      <div className="py-1 border-t">
+        <div className="px-4 py-2 flex items-center justify-between">
+          <div className="flex items-center">
+            {theme === 'dark' ? (
+              <Moon className="h-4 w-4 mr-3" />
+            ) : (
+              <Sun className="h-4 w-4 mr-3" />
+            )}
+            <span className="text-sm">Dark theme</span>
+          </div>
+          <Switch 
+            checked={settings.darkMode}
+            onCheckedChange={(checked) => handleSettingChange('darkMode', checked)}
+          />
+        </div>
+        
+        <div className="px-4 py-2 flex items-center justify-between">
+          <div className="flex items-center">
+            <Shield className="h-4 w-4 mr-3" />
+            <span className="text-sm">Restricted Mode</span>
+          </div>
+          <Switch 
+            checked={settings.restrictedMode}
+            onCheckedChange={(checked) => handleSettingChange('restrictedMode', checked)}
+          />
+        </div>
+        
+        <MenuItem icon={<Languages className="h-4 w-4" />} label="Language: English" to="#" />
+        <MenuItem icon={<HelpCircle className="h-4 w-4" />} label="Help" to="#" />
+      </div>
+      
+      <div className="py-1 border-t">
+        <MenuItem 
+          icon={<LogOut className="h-4 w-4" />} 
+          label="Sign out" 
+          to="#"
+          onClick={() => {
+            // This is a demo so we don't actually sign out, just close the menu
+            onClose();
+          }}
+        />
       </div>
     </div>
   );
@@ -96,20 +140,20 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ onClose }) => {
 
 interface MenuItemProps {
   icon: React.ReactNode;
-  text: string;
+  label: string;
   to: string;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ icon, text, to, onClick }) => {
+const MenuItem: React.FC<MenuItemProps> = ({ icon, label, to, onClick }) => {
   return (
     <Link 
-      to={to} 
-      className="flex items-center py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800"
+      to={to}
+      className="flex items-center px-4 py-2 hover:bg-muted w-full"
       onClick={onClick}
     >
-      <span className="mr-3 text-gray-700 dark:text-gray-300">{icon}</span>
-      <span>{text}</span>
+      <span className="mr-3 text-muted-foreground">{icon}</span>
+      <span className="text-sm">{label}</span>
     </Link>
   );
 };

@@ -6,7 +6,14 @@ import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useTheme } from '@/hooks/use-theme';
 import AccountSettings from './AccountSettings';
-import { videos } from '@/data/videos';
+import NotificationsPanel from './NotificationsPanel';
+import { longVideos } from '@/data/longVideos';
+import { shortsVideos } from '@/data/shortsVideos';
+import { 
+  getUnreadNotificationsCount, 
+  initializeNotifications 
+} from '@/data/notifications';
+import { getUserProfile } from '@/data/userData';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -15,29 +22,58 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const userProfile = getUserProfile();
 
-  // Handle clicks outside search suggestions
+  // Initialize notifications when component mounts
+  useEffect(() => {
+    initializeNotifications();
+    updateNotificationCount();
+    
+    // Check for new notifications periodically
+    const interval = setInterval(() => {
+      updateNotificationCount();
+    }, 60000); // Check every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Update notification count
+  const updateNotificationCount = () => {
+    setUnreadNotifications(getUnreadNotificationsCount());
+  };
+
+  // Handle clicks outside search suggestions and notifications panel
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowSearchSuggestions(false);
       }
+      
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node) && showNotifications) {
+        setShowNotifications(false);
+      }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [showNotifications]);
 
   // Generate search suggestions when typing
   useEffect(() => {
     if (searchQuery.length > 1) {
-      const filteredSuggestions = videos
+      // Combine videos from both long videos and shorts
+      const allVideos = [...longVideos, ...shortsVideos];
+      
+      const filteredSuggestions = allVideos
         .filter(video => 
           video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           video.channelName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -76,6 +112,18 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
   const toggleAccountSettings = () => {
     setShowAccountSettings(!showAccountSettings);
+    // Close notifications if it's open
+    if (showNotifications) setShowNotifications(false);
+  };
+
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+    // Close account settings if it's open
+    if (showAccountSettings) setShowAccountSettings(false);
+    // Reset unread count when opening notifications
+    if (!showNotifications) {
+      updateNotificationCount();
+    }
   };
 
   return (
@@ -172,18 +220,40 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         <Button variant="ghost" size="icon" className="hidden sm:flex">
           <Video className="h-5 w-5" />
         </Button>
-        <Button variant="ghost" size="icon" className="hidden sm:flex">
-          <Bell className="h-5 w-5" />
-        </Button>
+        <div ref={notificationsRef} className="relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="hidden sm:flex relative" 
+            onClick={toggleNotifications}
+          >
+            <Bell className="h-5 w-5" />
+            {unreadNotifications > 0 && (
+              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {unreadNotifications > 9 ? '9+' : unreadNotifications}
+              </span>
+            )}
+          </Button>
+          {showNotifications && (
+            <NotificationsPanel 
+              onClose={() => setShowNotifications(false)} 
+              onUpdate={updateNotificationCount}
+            />
+          )}
+        </div>
         <Button variant="ghost" size="icon" className="md:hidden">
           <Search className="h-5 w-5" />
         </Button>
         <Button variant="ghost" size="icon" onClick={toggleAccountSettings}>
           <Avatar className="h-8 w-8">
             <AvatarImage 
-              src="https://github.com/shadcn.png" 
+              src={userProfile.profilePicture} 
+              alt={userProfile.displayName}
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40x40?text=User';
+                const initial = userProfile.displayName.charAt(0).toUpperCase();
+                const colors = ["4285F4", "DB4437", "F4B400", "0F9D58"];
+                const colorIndex = userProfile.username.length % colors.length;
+                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${initial}&background=${colors[colorIndex]}&color=fff&size=32`;
                 // Also hide the error by stopping propagation
                 e.stopPropagation();
               }}

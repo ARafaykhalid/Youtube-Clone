@@ -6,78 +6,57 @@ import { ThumbsUp, ThumbsDown, MessageSquare, Share2, ChevronUp, ChevronDown } f
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useTheme } from '@/hooks/use-theme';
-
-// Real YouTube Shorts IDs that are confirmed working
-const SHORTS_VIDEO_IDS = [
-  'YMWUi1GRC3E', // YouTube Shorts from official channels  
-  'jWe-B-8TX2I',
-  '8TXxZi5f_dA',
-  '3-Xq_Zz3nPA', 
-  'Gu6z6kIukgg',
-  'Ydr5iXIXGAQ',
-  'ohtiLmhGJJs',
-  'u9Mv98Gr5pY',
-  '_sYFY6AsMh4'
-];
-
-interface ShortVideo {
-  id: string;
-  videoId: string;
-  title: string;
-  channelName: string;
-  channelImageUrl: string;
-  likes: number;
-}
+import { shortsVideos, ShortsVideo, getRelatedShorts } from '@/data/shortsVideos';
+import { saveLikedVideo } from '@/data/videos';
 
 const Shorts = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentShortIndex, setCurrentShortIndex] = useState(0);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const [disliked, setDisliked] = useState<Record<string, boolean>>({});
+  const [shorts, setShorts] = useState<ShortsVideo[]>([]);
+  const [showCommentForm, setShowCommentForm] = useState(false);
+  const [commentText, setCommentText] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   
-  // Create shorts data with real YouTube IDs
-  const shorts: ShortVideo[] = SHORTS_VIDEO_IDS.map((videoId, index) => ({
-    id: `short-${index}`,
-    videoId,
-    title: [
-      "Amazing trick you need to see! #shorts",
-      "You won't believe what happens next #viral",
-      "This cooking hack will save you time #cooking",
-      "New dance trend everyone's trying #dance",
-      "Life hack that actually works #lifehack",
-      "The most satisfying video you'll see today #satisfying",
-      "How to make this in under a minute #diy",
-      "This pet is adorable! #cute #animals",
-      "Mind-blowing magic trick revealed #magic"
-    ][index % 9],
-    channelName: [
-      "Fun Shorts",
-      "Trending Now",
-      "Quick Tips",
-      "Dance Masters",
-      "Life Hacks",
-      "Satisfying Clips",
-      "DIY Masters",
-      "Animal Kingdom",
-      "Magic Revealed"
-    ][index % 9],
-    channelImageUrl: `https://i.pravatar.cc/150?img=${30 + index}`,
-    likes: Math.floor(Math.random() * 50000) + 5000
-  }));
-  
-  const currentShort = shorts[currentShortIndex];
-  
   useEffect(() => {
+    // Initialize with randomized shorts videos
+    const randomizedShorts = [...shortsVideos].sort(() => 0.5 - Math.random());
+    setShorts(randomizedShorts);
+    
+    // Load liked videos from localStorage
+    try {
+      const likedVideosJson = localStorage.getItem('youtube-clone-liked-videos');
+      if (likedVideosJson) {
+        const likedVideoIds = JSON.parse(likedVideosJson) as string[];
+        
+        // Initialize liked state for shorts
+        const initialLikedState: Record<string, boolean> = {};
+        randomizedShorts.forEach(short => {
+          initialLikedState[short.id] = likedVideoIds.includes(short.id);
+        });
+        
+        setLiked(initialLikedState);
+      }
+    } catch (e) {
+      console.error('Failed to load liked videos', e);
+    }
+    
     // Auto close sidebar for better shorts viewing experience
     setSidebarOpen(false);
     
-    // Set body background to black in shorts mode
-    document.body.classList.add('shorts-mode');
+    return () => {
+      // Clean up any shorts-specific classes or modifications
+    };
+  }, []);
+
+  // Effect to handle theme changes
+  useEffect(() => {
+    document.documentElement.classList.toggle('shorts-viewing-mode', true);
     
     return () => {
-      document.body.classList.remove('shorts-mode');
+      document.documentElement.classList.toggle('shorts-viewing-mode', false);
     };
   }, []);
 
@@ -88,6 +67,8 @@ const Shorts = () => {
         handlePreviousShort();
       } else if (e.key === 'ArrowDown' || e.key === 'j') {
         handleNextShort();
+      } else if (e.key === 'c') {
+        toggleCommentForm();
       }
     };
     
@@ -102,22 +83,29 @@ const Shorts = () => {
   const handleNextShort = () => {
     if (currentShortIndex < shorts.length - 1) {
       setCurrentShortIndex(prev => prev + 1);
+      setShowCommentForm(false);
     }
   };
 
   const handlePreviousShort = () => {
     if (currentShortIndex > 0) {
       setCurrentShortIndex(prev => prev - 1);
+      setShowCommentForm(false);
     }
   };
   
   const handleLike = (id: string) => {
     const wasDisliked = disliked[id];
+    const isCurrentlyLiked = liked[id];
     
+    // Toggle like status
     setLiked(prev => ({
       ...prev,
       [id]: !prev[id]
     }));
+    
+    // Update in localStorage
+    saveLikedVideo(id, !isCurrentlyLiked);
     
     if (wasDisliked) {
       setDisliked(prev => ({
@@ -126,7 +114,7 @@ const Shorts = () => {
       }));
     }
     
-    if (!liked[id]) {
+    if (!isCurrentlyLiked) {
       toast.success('You liked this Short');
     }
   };
@@ -144,12 +132,30 @@ const Shorts = () => {
         ...prev,
         [id]: false
       }));
+      
+      // Remove from liked videos in localStorage
+      saveLikedVideo(id, false);
     }
   };
   
   const handleShare = () => {
-    navigator.clipboard.writeText(`https://youtube.com/shorts/${currentShort.videoId}`);
-    toast.success('Link copied to clipboard');
+    if (shorts.length > 0 && shorts[currentShortIndex]) {
+      navigator.clipboard.writeText(`https://youtube.com/shorts/${shorts[currentShortIndex].videoId}`);
+      toast.success('Link copied to clipboard');
+    }
+  };
+
+  const toggleCommentForm = () => {
+    setShowCommentForm(!showCommentForm);
+  };
+
+  const handleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (commentText.trim()) {
+      toast.success('Comment posted!');
+      setCommentText('');
+      setShowCommentForm(false);
+    }
   };
 
   // Adding wheel event to navigate between shorts
@@ -161,14 +167,29 @@ const Shorts = () => {
     }
   };
 
+  // Make sure we have shorts before rendering
+  if (shorts.length === 0) {
+    return (
+      <div className={`min-h-screen flex justify-center items-center ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>
+        <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${theme === 'dark' ? 'border-white' : 'border-black'}`}></div>
+      </div>
+    );
+  }
+
+  const currentShort = shorts[currentShortIndex];
+
+  // Check ShortsVideo type for comments property
+  const defaultComments = 0;
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'}`}>
       <Header toggleSidebar={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} />
       
       <main 
         className={cn(
-          "fixed top-14 left-0 right-0 bottom-0 flex justify-center items-center bg-black",
+          "fixed top-14 left-0 right-0 bottom-0 flex justify-center items-center",
+          theme === 'dark' ? "bg-black" : "bg-white",
           sidebarOpen ? "pl-60" : "pl-[72px]"
         )}
         onWheel={handleWheel}
@@ -177,13 +198,20 @@ const Shorts = () => {
         <div className="relative h-full flex flex-col justify-center items-center">
           {/* Navigation indicators */}
           <div className="fixed top-1/2 right-5 transform -translate-y-1/2 flex flex-col gap-2 z-30">
-            {shorts.map((_, idx) => (
+            {shorts.slice(0, 15).map((_, idx) => (
               <div 
                 key={`indicator-${idx}`}
-                className={`w-1 h-6 rounded-full cursor-pointer ${idx === currentShortIndex ? 'bg-white' : 'bg-gray-600'}`}
+                className={`w-1 h-6 rounded-full cursor-pointer ${
+                  idx === currentShortIndex 
+                    ? (theme === 'dark' ? 'bg-white' : 'bg-black') 
+                    : (theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300')
+                }`}
                 onClick={() => setCurrentShortIndex(idx)}
               />
             ))}
+            {shorts.length > 15 && (
+              <div className={`text-xs mt-2 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>+{shorts.length - 15}</div>
+            )}
           </div>
           
           {/* Shorts player */}
@@ -198,7 +226,9 @@ const Shorts = () => {
             
             {/* Navigation arrows */}
             <button 
-              className="absolute top-1/2 left-4 transform -translate-y-1/2 z-20 bg-gray-800/40 w-10 h-10 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+              className={`absolute top-1/2 left-4 transform -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity ${
+                theme === 'dark' ? 'bg-gray-800/40' : 'bg-gray-200/40'
+              }`}
               onClick={handlePreviousShort}
               disabled={currentShortIndex === 0}
             >
@@ -206,7 +236,9 @@ const Shorts = () => {
             </button>
             
             <button 
-              className="absolute top-1/2 right-4 transform -translate-y-1/2 z-20 bg-gray-800/40 w-10 h-10 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+              className={`absolute top-1/2 right-4 transform -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity ${
+                theme === 'dark' ? 'bg-gray-800/40' : 'bg-gray-200/40'
+              }`}
               onClick={handleNextShort}
               disabled={currentShortIndex === shorts.length - 1}
             >
@@ -222,101 +254,129 @@ const Shorts = () => {
                   alt={currentShort.channelName}
                   className="w-8 h-8 rounded-full mr-3"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/32x32?text=Channel';
+                    const channelInitial = currentShort.channelName.charAt(0).toUpperCase();
+                    const colors = ["4285F4", "DB4437", "F4B400", "0F9D58", "4285F4", "DB4437"];
+                    const colorIndex = currentShort.channelName.length % colors.length;
+                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${channelInitial}&background=${colors[colorIndex]}&color=fff&size=32`;
+                    (e.target as HTMLImageElement).onerror = null;
                   }}
                 />
                 <span className="font-medium text-sm text-white">{currentShort.channelName}</span>
                 <Button 
                   variant="outline" 
                   className="ml-3 h-8 bg-transparent border border-white/30 hover:bg-white/10 text-white text-xs rounded-full px-3"
+                  onClick={() => {
+                    // Subscribe logic would go here
+                    toast.success(`Subscribed to ${currentShort.channelName}`);
+                  }}
                 >
                   Subscribe
                 </Button>
               </div>
             </div>
             
-            {/* Interactions */}
-            <div className="absolute right-4 bottom-16 z-20 flex flex-col items-center space-y-6">
-              <div className="flex flex-col items-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={cn(
-                    "bg-gray-800/60 text-white rounded-full hover:bg-gray-700/80 w-12 h-12",
-                    liked[currentShort.id] && "text-red-500 bg-red-500/10"
-                  )}
-                  onClick={() => handleLike(currentShort.id)}
-                >
-                  <ThumbsUp className="h-6 w-6" />
-                </Button>
-                <span className="text-white text-xs mt-1">{
-                  liked[currentShort.id] 
-                    ? (currentShort.likes + 1).toLocaleString() 
-                    : currentShort.likes.toLocaleString()
-                }</span>
-              </div>
+            {/* Interaction buttons */}
+            <div className="absolute right-4 bottom-16 flex flex-col gap-5 items-center z-20">
+              <button 
+                className={`group flex flex-col items-center ${liked[currentShort.id] ? 'text-blue-500' : 'text-white'}`}
+                onClick={() => handleLike(currentShort.id)}
+              >
+                <div className="bg-gray-800 bg-opacity-60 rounded-full p-3 mb-1 group-hover:bg-gray-700">
+                  <ThumbsUp className="h-5 w-5" />
+                </div>
+                <span className="text-xs">{currentShort.likes}</span>
+              </button>
               
-              <div className="flex flex-col items-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={cn(
-                    "bg-gray-800/60 text-white rounded-full hover:bg-gray-700/80 w-12 h-12",
-                    disliked[currentShort.id] && "text-gray-400 bg-gray-700/50"
-                  )}
-                  onClick={() => handleDislike(currentShort.id)}
-                >
-                  <ThumbsDown className="h-6 w-6" />
-                </Button>
-                <span className="text-white text-xs mt-1">Dislike</span>
-              </div>
+              <button 
+                className={`group flex flex-col items-center ${disliked[currentShort.id] ? 'text-blue-500' : 'text-white'}`}
+                onClick={() => handleDislike(currentShort.id)}
+              >
+                <div className="bg-gray-800 bg-opacity-60 rounded-full p-3 mb-1 group-hover:bg-gray-700">
+                  <ThumbsDown className="h-5 w-5" />
+                </div>
+                <span className="text-xs">Dislike</span>
+              </button>
               
-              <div className="flex flex-col items-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="bg-gray-800/60 text-white rounded-full hover:bg-gray-700/80 w-12 h-12"
-                >
-                  <MessageSquare className="h-6 w-6" />
-                </Button>
-                <span className="text-white text-xs mt-1">Comment</span>
-              </div>
+              <button 
+                className="group flex flex-col items-center text-white"
+                onClick={toggleCommentForm}
+              >
+                <div className="bg-gray-800 bg-opacity-60 rounded-full p-3 mb-1 group-hover:bg-gray-700">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <span className="text-xs">{currentShort.comments || defaultComments}</span>
+              </button>
               
-              <div className="flex flex-col items-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="bg-gray-800/60 text-white rounded-full hover:bg-gray-700/80 w-12 h-12"
-                  onClick={handleShare}
-                >
-                  <Share2 className="h-6 w-6" />
-                </Button>
-                <span className="text-white text-xs mt-1">Share</span>
-              </div>
+              <button 
+                className="group flex flex-col items-center text-white"
+                onClick={handleShare}
+              >
+                <div className="bg-gray-800 bg-opacity-60 rounded-full p-3 mb-1 group-hover:bg-gray-700">
+                  <Share2 className="h-5 w-5" />
+                </div>
+                <span className="text-xs">Share</span>
+              </button>
             </div>
           </div>
           
-          {/* Current short indicator */}
-          <div className="mt-4 text-sm text-gray-400">
-            Short {currentShortIndex + 1} of {shorts.length}
-          </div>
+          {/* Comment form */}
+          {showCommentForm && (
+            <div className="fixed inset-0 bg-black bg-opacity-70 flex items-end justify-center z-40">
+              <div 
+                className={`w-full max-w-lg rounded-t-xl p-4 ${
+                  theme === 'dark' ? 'bg-gray-900' : 'bg-white'
+                } animate-slide-up`}
+              >
+                <h3 className={`font-bold text-lg mb-3 ${
+                  theme === 'dark' ? 'text-white' : 'text-black'
+                }`}>
+                  {currentShort.comments || defaultComments} Comments
+                </h3>
+                <form onSubmit={handleCommentSubmit}>
+                  <textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    className={`w-full p-3 rounded-lg mb-3 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-800 text-white border-gray-700' 
+                        : 'bg-gray-100 text-black border-gray-300'
+                    } border outline-none`}
+                    placeholder="Add a comment..."
+                    rows={3}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      type="button" 
+                      variant={theme === 'dark' ? 'outline' : 'secondary'}
+                      onClick={() => setShowCommentForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={!commentText.trim()}
+                      variant="default"
+                    >
+                      Comment
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       </main>
       
-      {/* Add style for shorts mode */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            body.shorts-mode {
-              background-color: #000;
-              color: #fff;
-            }
-            body.shorts-mode .dark {
-              background-color: #000;
-            }
-          `
-        }}
-      />
+      {/* Add CSS for animations */}
+      <style>{`
+        @keyframes slide-up {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import VideoGrid from '@/components/VideoGrid';
-import { videos, Video } from '@/data/videos';
+import { videos, subscribedChannels } from '@/data/videos';
+import { longVideos } from '@/data/longVideos';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -13,9 +14,10 @@ interface IndexProps {
 
 const Index: React.FC<IndexProps> = ({ category }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const params = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [filteredVideos, setFilteredVideos] = useState<Video[]>(videos);
+  const [filteredVideos, setFilteredVideos] = useState(longVideos);
   const [pageTitle, setPageTitle] = useState('Home');
   const [activeChip, setActiveChip] = useState('All');
 
@@ -42,53 +44,79 @@ const Index: React.FC<IndexProps> = ({ category }) => {
     'All': '',
     'Music': 'music',
     'Gaming': 'gaming',
-    'Programming': 'education',
-    'Education': 'education',
+    'Programming': 'coding',
+    'Education': 'learning',
     'Design': 'design',
     'News': 'news',
     'Sports': 'sports',
-    'Entertainment': 'movie',
+    'Entertainment': 'entertainment',
     'Science': 'science',
-    'Technology': 'education',
-    'Cooking': 'education',
-    'Travel': 'entertainment',
-    'Fitness': 'sports',
-    'Photography': 'design'
+    'Technology': 'tech',
+    'Cooking': 'cooking',
+    'Travel': 'travel',
+    'Fitness': 'fitness',
+    'Photography': 'photography'
   };
 
   useEffect(() => {
     // Determine the proper category from either props or URL params
-    const urlCategory = params.category || category;
+    const urlCategory = params.category || category || location.pathname.slice(1);
     
-    if (urlCategory === 'channel') {
-      // Handle channel specific content
-      const channelName = params.channelName || '';
-      const channelVideos = videos.filter(video => 
-        video.channelName === decodeURIComponent(channelName)
+    if (urlCategory === 'subscriptions') {
+      // Filter for subscribed channels
+      const subscribedVideos = longVideos.filter(video => 
+        subscribedChannels.some(channel => channel.name === video.channelName)
       );
-      setFilteredVideos(channelVideos);
-      setPageTitle(`${decodeURIComponent(channelName)}'s Videos`);
-    } else if (urlCategory) {
+      setFilteredVideos(subscribedVideos);
+      setPageTitle('Subscriptions');
+      setActiveChip('All');
+    } else if (urlCategory === 'explore') {
+      // For explore page, show a mix of trending videos from different categories
+      const exploreVideos = longVideos
+        .sort(() => 0.5 - Math.random()) // Randomize for variety
+        .slice(0, 24); // Limit to 24 videos
+      setFilteredVideos(exploreVideos);
+      setPageTitle('Explore');
+      setActiveChip('All');
+    } else if (urlCategory && urlCategory !== 'channel' && urlCategory !== '/') {
+      // Map from URL category to actual category in videos
+      const categoryName = Object.entries(categoryMap)
+        .find(([_, value]) => value === urlCategory)?.[0] || 
+        Object.keys(categoryMap).find(key => key.toLowerCase() === urlCategory.toLowerCase()) || 
+        urlCategory;
+      
+      // If category is "learning", use "Education" for video filtering
+      const categoryForFilter = urlCategory === 'learning' ? 'education' : urlCategory;
+      
       // Filter by specific category
-      const categoryVideos = videos.filter(video => 
-        video.category?.toLowerCase() === urlCategory.toLowerCase()
-      );
-      setFilteredVideos(categoryVideos);
-      setPageTitle(urlCategory.charAt(0).toUpperCase() + urlCategory.slice(1));
+      const categoryVideos = longVideos.filter(video => {
+        if (!video.category) return false;
+        
+        // Check if video category matches the selected category (case insensitive)
+        return video.category.toLowerCase() === categoryForFilter.toLowerCase() ||
+               video.category.toLowerCase() === categoryName.toLowerCase();
+      });
+      
+      setFilteredVideos(categoryVideos.length > 0 ? categoryVideos : longVideos.slice(0, 8));
+      setPageTitle(categoryName.charAt(0).toUpperCase() + categoryName.slice(1));
       
       // Set active chip based on category
-      const chipEntries = Object.entries(categoryMap);
-      const matchingChip = chipEntries.find(([_, value]) => value.toLowerCase() === urlCategory.toLowerCase());
+      const matchingChip = Object.entries(categoryMap)
+        .find(([_, value]) => value.toLowerCase() === urlCategory.toLowerCase())?.[0] ||
+        Object.keys(categoryMap).find(key => key.toLowerCase() === urlCategory.toLowerCase());
+      
       if (matchingChip) {
-        setActiveChip(matchingChip[0]);
+        setActiveChip(matchingChip);
+      } else {
+        setActiveChip('All');
       }
     } else {
       // Default to showing all videos
-      setFilteredVideos(videos);
+      setFilteredVideos(longVideos);
       setPageTitle('Home');
       setActiveChip('All');
     }
-  }, [category, params]);
+  }, [category, params, location.pathname]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -152,7 +180,9 @@ const Index: React.FC<IndexProps> = ({ category }) => {
             <div className="flex flex-col items-center justify-center min-h-[50vh]">
               <h2 className="text-xl font-medium mb-2">No videos found</h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Try selecting a different category
+                {category === 'subscriptions' 
+                  ? "Subscribe to channels to see videos here"
+                  : "Try selecting a different category"}
               </p>
             </div>
           )}

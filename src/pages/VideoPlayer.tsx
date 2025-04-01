@@ -6,7 +6,9 @@ import Sidebar from '@/components/Sidebar';
 import CommentSection from '@/components/CommentSection';
 import RelatedVideos from '@/components/RelatedVideos';
 import VideoPlayerComponent from '@/components/VideoPlayer';
-import { getVideoById, getRelatedVideos, comments, isChannelSubscribed, toggleChannelSubscription } from '@/data/videos';
+import { getVideoById, getRelatedVideos, comments, isChannelSubscribed, toggleChannelSubscription, saveLikedVideo } from '@/data/videos';
+import { getLongVideosById } from '@/data/longVideos';
+import { getShortsById } from '@/data/shortsVideos';
 import { ThumbsUp, ThumbsDown, Share2, Save, MoreHorizontal, Users, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -21,8 +23,12 @@ const VideoPlayer = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [youtubeDescription, setYoutubeDescription] = useState('');
   
-  const video = getVideoById(videoId || '');
-  const relatedVideos = getRelatedVideos(videoId || '').slice(0, 8);
+  // Try to find the video in longVideos first, then check shortsVideos
+  const video = getVideoById(videoId || '') || 
+                getLongVideosById(videoId || '') || 
+                getShortsById(videoId || '');
+                
+  const relatedVideos = getRelatedVideos(videoId || '', 8);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -35,7 +41,7 @@ const VideoPlayer = () => {
     // Reset states when video changes
     if (video) {
       setSubscribed(isChannelSubscribed(video.channelName));
-      setLiked(false);
+      setLiked(video.isLiked || false);
       setDisliked(false);
       setSaved(false);
       
@@ -64,7 +70,17 @@ const VideoPlayer = () => {
   };
 
   if (!video) {
-    return <div>Video not found</div>;
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold mb-4">Video not found</h2>
+          <p className="mb-6">The video you're looking for doesn't exist or has been removed.</p>
+          <Link to="/">
+            <Button>Return to Home</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const handleSubscribe = () => {
@@ -80,10 +96,19 @@ const VideoPlayer = () => {
 
   const likeVideo = () => {
     if (!disliked) {
-      setLiked(!liked);
+      const newLikedState = !liked;
+      setLiked(newLikedState);
+      // Persist like status
+      if (video) {
+        saveLikedVideo(video.id, newLikedState);
+      }
     } else {
       setLiked(true);
       setDisliked(false);
+      // Persist like status
+      if (video) {
+        saveLikedVideo(video.id, true);
+      }
     }
     if (!liked) {
       toast.success("Added to liked videos");
@@ -96,6 +121,10 @@ const VideoPlayer = () => {
     } else {
       setDisliked(true);
       setLiked(false);
+      // Remove from liked videos
+      if (video) {
+        saveLikedVideo(video.id, false);
+      }
     }
   };
 
@@ -297,8 +326,12 @@ const VideoPlayer = () => {
                 </div>
               </div>
               
-              {/* Comments Section */}
-              <CommentSection comments={comments} totalComments={comments.length} />
+              {/* Comment Section */}
+              <CommentSection 
+                comments={comments} 
+                totalComments={comments.length} 
+                videoId={video.id}
+              />
             </div>
           </div>
           
