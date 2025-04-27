@@ -1,63 +1,121 @@
 # YouTube Clone
 
-A responsive YouTube clone built with React, TypeScript, and Tailwind CSS.
+A responsive YouTube clone built with React, TypeScript, and Tailwind CSS that replicates core YouTube features and UI.
 
-![YouTube Clone Screenshot](https://github.com/shadcn.png)
+---
 
-## Features
+![YouTube Clone Screenshot](/screenshot.png)
 
-- **Responsive Design**: Works on mobile, tablet, and desktop
-- **YouTube Video Integration**: Watch real YouTube videos through embedded iframes
-- **Dark Mode Support**: Toggle between light and dark themes
-- **Channel Pages**: View channels and their videos
-- **Watch Later**: Save videos to watch later
-- **Shorts**: Browse short-form videos similar to YouTube Shorts
-- **Library**: View history, liked videos, and saved videos
-- **Search Functionality**: Search for videos in the application
+---
 
-## Tech Stack
+## 🚀 Features
 
-- **Frontend Framework**: React with TypeScript
-- **Styling**: Tailwind CSS with Shadcn UI components
+- **Responsive Design** - Works seamlessly across mobile, tablet, and desktop
+- **Video Playback** - Watch YouTube videos through embedded iframes
+- **Dark/Light Mode** - Toggle between themes with system preference support
+- **Channel Pages** - Browse creator channels and their video collections
+- **Watch Later** - Save videos to your personal watch queue
+- **Shorts Feed** - Vertical short-form video browsing similar to YouTube Shorts
+- **Library Section** - Access your watch history, liked videos, and saved content
+- **Search Functionality** - Find videos within the application
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React with TypeScript
+- **Styling**: Tailwind CSS + Shadcn UI components
 - **Routing**: React Router
-- **State Management**: React Hooks
-- **Video Player**: YouTube Iframe API
-- **Notifications**: Sonner for toast notifications
+- **State Management**: React Context API and Hooks
+- **Video Integration**: YouTube Iframe API
+- **Notifications**: Sonner for toast messages
+- **Build Tool**: Vite
 
-## How to Run
+---
+
+## 📋 Prerequisites
+
+- Node.js (v16 or newer)
+- npm or bun package manager
+
+---
+
+## 🚦 Getting Started
 
 1. Clone the repository
-2. Install dependencies:
+   ```bash
+   git clone https://github.com/yourusername/YouTube-Clone.git
+   cd YouTube-Clone
    ```
+
+2. Install dependencies
+   ```bash
    npm install
+   # or
+   bun install
    ```
-3. Start the development server:
-   ```
+
+3. Start the development server
+   ```bash
    npm run dev
+   # or
+   bun run dev
    ```
+
 4. Open your browser and navigate to `http://localhost:5173`
 
-## Project Structure
+---
 
-- `src/components`: Reusable UI components
-- `src/data`: Mock data for videos and comments
-- `src/hooks`: Custom React hooks (including theme management)
-- `src/lib`: Utility functions
-- `src/pages`: Main page components
+## 📂 Project Structure
 
-## Features to Add
+```
+src/
+├── assets/       # Static assets and images
+├── components/   # Reusable UI components
+├── data/         # Mock data for videos and channels
+├── hooks/        # Custom React hooks
+├── layouts/      # Page layout components
+├── lib/          # Utility functions and helpers
+├── pages/        # Main application pages
+├── types/        # TypeScript type definitions
+└── utils/        # Helper utilities
+```
 
-- User authentication
-- Video uploading
-- Real API integration
-- Comments and interactions functionality
+---
+
+## 🔮 Roadmap
+
+- User authentication and profiles
+- Video uploading capability
+- Live chat functionality
+- Comments and interactions
 - Subscription management
-- Playlist creation and management
+- Custom playlists creation
+- Real API integration with YouTube Data API
 
-## License
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📝 License
 
 MIT
 
-## Credits
+---
 
-This project was created as a learning exercise and is not affiliated with YouTube or Google.
+## 📣 Acknowledgements
+
+- This project was created as a learning exercise
+- Not affiliated with YouTube or Google
+- UI inspired by YouTube's design
+- Built with [Shadcn UI](https://ui.shadcn.com/) components

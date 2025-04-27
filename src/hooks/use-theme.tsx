@@ -32,7 +32,7 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = window.document.documentElement;
-    
+
     // Remove current theme class
     root.classList.remove('light', 'dark');
 
@@ -47,7 +47,7 @@ export function ThemeProvider({
       root.classList.add(theme);
       document.body.classList.toggle('dark-mode', theme === 'dark');
     }
-    
+
     // Store preference in localStorage
     localStorage.setItem(storageKey, theme);
   }, [theme, storageKey]);
@@ -55,7 +55,7 @@ export function ThemeProvider({
   // Update theme when system preference changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = () => {
       if (theme === 'system') {
         const root = window.document.documentElement;
@@ -65,7 +65,7 @@ export function ThemeProvider({
         document.body.classList.toggle('dark-mode', isDark);
       }
     };
-    
+
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
